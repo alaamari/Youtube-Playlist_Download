@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Downloader Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background: #000000;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="text-white flex items-center justify-center min-h-screen p-4">
+    <div id="root" class="w-full max-w-xl"></div>
+
+    <script type="text/babel">
+        function App() {
+            const [url, setUrl] = React.useState('');
+            const [format, setFormat] = React.useState('mp3');
+            const [playlist, setPlaylist] = React.useState('no');
+            const [browser, setBrowser] = React.useState('none');
+            const [dest, setDest] = React.useState('/Users/Shared');
+            
+            const [videoInfo, setVideoInfo] = React.useState(null);
+            const [loadingInfo, setLoadingInfo] = React.useState(false);
+
+            const [status, setStatus] = React.useState('idle'); 
+            const [progress, setProgress] = React.useState(0);
+            const [logMessage, setLogMessage] = React.useState('');
+            const [currentTime, setCurrentTime] = React.useState('');
+
+            React.useEffect(() => {
+                const now = new Date();
+                const options = { day: 'numeric', month: 'short' };
+                const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                setCurrentTime(`${now.toLocaleDateString('en-US', options)} at ${timeStr}`);
+
+                fetch('/api/config')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.defaultDir) setDest(data.defaultDir);
+                    });
+            }, []);
+
+            const handleUrlChange = (newUrl) => {
+                setUrl(newUrl);
+                setVideoInfo(null);
+
+                if (newUrl.includes('youtube.com') || newUrl.includes('youtu.be')) {
+                    setLoadingInfo(true);
+                    fetch(`/api/info?url=${encodeURIComponent(newUrl)}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (!data.error) setVideoInfo(data);
+                            setLoadingInfo(false);
+                        })
+                        .catch(() => setLoadingInfo(false));
+                }
+            };
+
+            const startDownload = (e) => {
+                e.preventDefault();
+                if (!url) return;
+
+                setStatus('downloading');
+                setProgress(0);
+                setLogMessage('Connecting to YouTube streams...');
+
+                const params = new URLSearchParams({ url, format, playlist, browser, dest });
+                const eventSource = new EventSource(`/api/download?${params.toString()}`);
+
+                eventSource.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'progress') {
+                        if (data.percent !== null) setProgress(data.percent);
+                        setLogMessage(data.message);
+                    } else if (data.type === 'done') {
+                        eventSource.close();
+                        if (data.code === 0) {
+                            setStatus('complete');
+                            setLogMessage('Saved successfully to ' + dest);
+                        } else {
+                            setStatus('error');
+                            setLogMessage('Download encountered an issue.');
+                        }
+                    }
+                };
+
+                eventSource.onerror = () => {
+                    eventSource.close();
+                    setStatus('error');
+                    setLogMessage('Lost connection to backend server.');
+                };
+            };
+
+            return (
+                <div className="bg-[#1c1c1e]/95 backdrop-blur-3xl border border-white/20 rounded-2xl p-4 shadow-[0_25px_60px_rgba(0,0,0,0.8)] text-slate-100">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3.5">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-inner border border-white/20">
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h1 className="text-[15px] font-semibold text-white">YouTube Downloader Pro</h1>
+                                <p className="text-xs text-slate-400">{currentTime}</p>
+                            </div>
+                        </div>
+
+                        {status === 'idle' && (
+                            <button form="download-form" type="submit" className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-5 py-1.5 rounded-full shadow-lg cursor-pointer">
+                                Download
+                            </button>
+                        )}
+                    </div>
+
+                    {status === 'idle' && (
+                        <form id="download-form" onSubmit={startDownload} className="mt-4 pt-4 border-t border-white/10 space-y-3">
+                            <div>
+                                <label className="block text-[11px] font-medium text-slate-400 mb-1">Video or Playlist URL</label>
+                                <input 
+                                    type="text" 
+                                    value={url} 
+                                    onChange={e => handleUrlChange(e.target.value)} 
+                                    placeholder="Paste YouTube link here..." 
+                                    className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-xl focus:outline-none focus:border-blue-500 text-xs text-white"
+                                    required
+                                />
+                            </div>
+
+                            {loadingInfo && <div className="text-[11px] text-blue-400 text-center py-2 animate-pulse">Fetching preview...</div>}
+
+                            {videoInfo && !loadingInfo && (
+                                <div className="flex items-center space-x-3 p-2.5 bg-black/40 border border-white/10 rounded-xl">
+                                    <img src={videoInfo.thumbnail} alt="" className="w-20 h-12 object-cover rounded-lg border border-white/10" />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-[11px] font-semibold text-white truncate">{videoInfo.title}</p>
+                                        <p className="text-[10px] text-slate-400 truncate mt-0.5">{videoInfo.uploader} • {videoInfo.duration}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-[11px] font-medium text-slate-400 mb-1">Format</label>
+                                    <select value={format} onChange={e => setFormat(e.target.value)} className="w-full px-3 py-1.5 bg-black/50 border border-white/10 rounded-xl text-xs text-slate-200">
+                                        <option value="mp3">MP3 (Audio 320kbps)</option>
+                                        <option value="mp4">MP4 (Video 1080p)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-medium text-slate-400 mb-1">Playlist Mode</label>
+                                    <select value={playlist} onChange={e => setPlaylist(e.target.value)} className="w-full px-3 py-1.5 bg-black/50 border border-white/10 rounded-xl text-xs text-slate-200">
+                                        <option value="no">Single Video Only</option>
+                                        <option value="yes">Entire Playlist</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-[11px] font-medium text-slate-400 mb-1">Save Destination</label>
+                                <input type="text" value={dest} onChange={e => setDest(e.target.value)} className="w-full px-3 py-1.5 bg-black/50 border border-white/10 rounded-xl text-[11px] text-slate-400 truncate" />
+                            </div>
+                        </form>
+                    )}
+
+                    {status === 'downloading' && (
+                        <div className="mt-4 pt-4 border-t border-white/10 space-y-3 text-center py-4">
+                            <div className="w-full bg-white/15 rounded-full h-2.5 overflow-hidden p-0.5">
+                                <div className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full" style={{ width: `${progress}%` }}></div>
+                            </div>
+                            <div className="flex justify-between items-center text-xs text-slate-300">
+                                <span>Transcoding & Muxing...</span>
+                                <span className="font-bold text-blue-400">{progress}%</span>
+                            </div>
+                            <p className="text-[11px] text-slate-400 font-mono truncate bg-black/40 p-2.5 rounded-xl">{logMessage}</p>
+                        </div>
+                    )}
+
+                    {status === 'complete' && (
+                        <div className="mt-4 pt-4 border-t border-white/10 space-y-4 text-center py-4">
+                            <p className="text-sm font-semibold text-white">Download Complete Successfully!</p>
+                            <p className="text-xs text-slate-400">{logMessage}</p>
+                            <button onClick={() => setStatus('idle')} className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl text-xs text-white">Download Another</button>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

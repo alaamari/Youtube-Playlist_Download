@@ -1,123 +1,120 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.6">
-  <style type="text/css">
-    body {background-color: #000000}
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'; -webkit-text-stroke: #000000}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'; -webkit-text-stroke: #000000; min-height: 15.0px}
-    span.s1 {font-kerning: none}
-  </style>
-</head>
-<body>
-<p class="p1"><span class="s1">&lt;!DOCTYPE html&gt;</span></p>
-<p class="p1"><span class="s1">&lt;html lang="en"&gt;</span></p>
-<p class="p1"><span class="s1">&lt;head&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;title&gt;YouTube &amp; Spotify Playlist Downloader&lt;/title&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"&gt;</span></p>
-<p class="p1"><span class="s1">&lt;/head&gt;</span></p>
-<p class="p1"><span class="s1">&lt;body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-red-500 selection:text-white"&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- Header --&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;header class="w-full py-6 px-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 backdrop-blur-md"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="flex items-center space-x-3"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="bg-red-600 p-2.5 rounded-xl text-white shadow-lg shadow-red-600/30"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;i class="fa-solid fa-cloud-arrow-down text-xl"&gt;&lt;/i&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span class="font-bold text-xl tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent"&gt;MediaFlow Pro&lt;/span&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="flex items-center space-x-2 text-xs font-medium px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-full text-emerald-400"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"&gt;&lt;/span&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;span&gt;Cloud Online&lt;/span&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/header&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- Main Container --&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;main class="flex-grow flex items-center justify-center px-4 py-12"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="w-full max-w-2xl bg-slate-900/80 border border-slate-800/80 rounded-3xl p-8 shadow-2xl backdrop-blur-xl"&gt;</span></p>
-<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span></span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="text-center mb-8"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;h1 class="text-3xl font-extrabold tracking-tight mb-2"&gt;Download Playlists Instantly&lt;/h1&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;p class="text-slate-400 text-sm"&gt;Paste a YouTube or Spotify link below to get started.&lt;/p&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;!-- Input Form --&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="space-y-4"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div class="relative"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;i class="fa-solid fa-link"&gt;&lt;/i&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/span&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=... or Spotify link"<span class="Apple-converted-space"> </span></span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>class="w-full pl-11 pr-4 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-sm transition-all text-slate-200 placeholder-slate-600"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div class="grid grid-cols-2 gap-4"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;label class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider"&gt;Format&lt;/label&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;select id="formatSelect" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-red-500 text-sm text-slate-300"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;option value="mp4"&gt;Video (MP4)&lt;/option&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;option value="mp3"&gt;Audio Only (MP3)&lt;/option&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/select&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;label class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider"&gt;Quality&lt;/label&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;select id="qualitySelect" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-red-500 text-sm text-slate-300"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;option value="highest"&gt;Highest Quality&lt;/option&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;option value="1080p"&gt;1080p / 320kbps&lt;/option&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;option value="720p"&gt;720p / 192kbps&lt;/option&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/select&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;button onclick="startDownload()" class="w-full mt-2 py-4 bg-red-600 hover:bg-red-500 text-white font-semibold rounded-2xl shadow-lg shadow-red-600/20 transition-all duration-200 flex items-center justify-center space-x-2"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;i class="fa-solid fa-download"&gt;&lt;/i&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;span&gt;Fetch &amp; Download&lt;/span&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/button&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;!-- Status / Result Box --&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div id="statusBox" class="hidden mt-6 p-4 bg-slate-950 border border-slate-800 rounded-2xl text-sm text-slate-300"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div class="flex items-center space-x-3"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;i class="fa-solid fa-circle-notch fa-spin text-red-500 text-lg"&gt;&lt;/i&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;span id="statusText"&gt;Processing media request...&lt;/span&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/main&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- Footer --&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;footer class="w-full py-6 text-center text-xs text-slate-600 border-t border-slate-900"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>MediaFlow Cloud &amp;bull; Powered by Vercel</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/footer&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>function startDownload() {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const url = document.getElementById('urlInput').value.trim();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const statusBox = document.getElementById('statusBox');</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const statusText = document.getElementById('statusText');</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>if (!url) {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>alert('Please enter a valid YouTube or Spotify URL.');</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>return;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>}</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>statusBox.classList.remove('hidden');</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>statusText.textContent = 'Connecting to extraction engine for: ' + url;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>setTimeout(() =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>statusText.textContent = 'Preparing media package... Ready soon.';</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>}, 2000);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</span></p>
-<p class="p1"><span class="s1">&lt;/body&gt;</span></p>
-<p class="p1"><span class="s1">&lt;/html&gt;</span></p>
-</body>
-</html>
+{\rtf1\ansi\ansicpg1252\cocoartf2870
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww12720\viewh7800\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 <!DOCTYPE html>\
+<html lang="en">\
+<head>\
+    <meta charset="UTF-8">\
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">\
+    <title>YouTube & Spotify Playlist Downloader</title>\
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">\
+    <style>\
+        * \{ box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; \}\
+        body \{ background-color: #030712; color: #f3f4f6; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; \}\
+        header \{ width: 100%; padding: 20px 40px; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between; align-items: center; background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(10px); \}\
+        .logo-box \{ display: flex; align-items: center; gap: 12px; \}\
+        .logo-icon \{ background: #dc2626; padding: 10px; border-radius: 12px; color: white; box-shadow: 0 10px 15px -3px rgba(220, 38, 38, 0.3); \}\
+        .badge \{ font-size: 12px; font-weight: 500; padding: 6px 12px; background: #111827; border: 1px solid #1f2937; border-radius: 9999px; color: #34d399; display: flex; align-items: center; gap: 8px; \}\
+        .dot \{ width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; \}\
+        @keyframes pulse \{ 0%, 100% \{ opacity: 1; \} 50% \{ opacity: 0.4; \} \}\
+        main \{ flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 20px; \}\
+        .card \{ width: 100%; max-width: 600px; background: rgba(17, 24, 39, 0.8); border: 1px solid rgba(31, 41, 55, 0.8); border-radius: 24px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); backdrop-filter: blur(20px); \}\
+        h1 \{ font-size: 28px; font-weight: 800; margin-bottom: 8px; text-align: center; \}\
+        p.subtitle \{ color: #9ca3af; font-size: 14px; text-align: center; margin-bottom: 24px; \}\
+        .input-group \{ position: relative; margin-bottom: 16px; \}\
+        .input-group i \{ position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #6b7280; \}\
+        input[type="text"] \{ width: 100%; padding: 16px 16px 16px 48px; background: #030712; border: 1px solid #1f2937; border-radius: 16px; color: #f3f4f6; font-size: 14px; outline: none; transition: all 0.2s; \}\
+        input[type="text"]:focus \{ border-color: #dc2626; box-shadow: 0 0 0 1px #dc2626; \}\
+        .row \{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; \}\
+        label \{ display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #9ca3af; margin-bottom: 8px; letter-spacing: 0.05em; \}\
+        select \{ width: 100%; padding: 12px 16px; background: #030712; border: 1px solid #1f2937; border-radius: 12px; color: #d1d5db; font-size: 14px; outline: none; \}\
+        select:focus \{ border-color: #dc2626; \}\
+        button.submit-btn \{ width: 100%; padding: 16px; background: #dc2626; color: white; border: none; border-radius: 16px; font-weight: 600; font-size: 15px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 20px -5px rgba(220, 38, 38, 0.4); \}\
+        button.submit-btn:hover \{ background: #b91c1c; \}\
+        .status-box \{ margin-top: 20px; padding: 16px; background: #030712; border: 1px solid #1f2937; border-radius: 16px; font-size: 14px; color: #d1d5db; display: none; align-items: center; gap: 12px; \}\
+        .status-box.active \{ display: flex; \}\
+        footer \{ width: 100%; padding: 20px; text-align: center; font-size: 12px; color: #4b5563; border-top: 1px solid #111827; \}\
+    </style>\
+</head>\
+<body>\
+\
+    <header>\
+        <div class="logo-box">\
+            <div class="logo-icon"><i class="fa-solid fa-cloud-arrow-down"></i></div>\
+            <span style="font-weight: 700; font-size: 18px;">MediaFlow Pro</span>\
+        </div>\
+        <div class="badge">\
+            <div class="dot"></div>\
+            <span>Cloud Online</span>\
+        </div>\
+    </header>\
+\
+    <main>\
+        <div class="card">\
+            <h1>Download Playlists Instantly</h1>\
+            <p class="subtitle">Paste a YouTube or Spotify link below to get started.</p>\
+\
+            <div class="input-group">\
+                <i class="fa-solid fa-link"></i>\
+                <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=... or Spotify link">\
+            </div>\
+\
+            <div class="row">\
+                <div>\
+                    <label>Format</label>\
+                    <select id="formatSelect">\
+                        <option value="mp4">Video (MP4)</option>\
+                        <option value="mp3">Audio Only (MP3)</option>\
+                    </select>\
+                </div>\
+                <div>\
+                    <label>Quality</label>\
+                    <select id="qualitySelect">\
+                        <option value="highest">Highest Quality</option>\
+                        <option value="1080p">1080p / 320kbps</option>\
+                        <option value="720p">720p / 192kbps</option>\
+                    </select>\
+                </div>\
+            </div>\
+\
+            <button class="submit-btn" onclick="startDownload()">\
+                <i class="fa-solid fa-download"></i>\
+                <span>Fetch & Download</span>\
+            </button>\
+\
+            <div id="statusBox" class="status-box">\
+                <i class="fa-solid fa-circle-notch fa-spin" style="color: #dc2626; font-size: 18px;"></i>\
+                <span id="statusText">Processing media request...</span>\
+            </div>\
+        </div>\
+    </main>\
+\
+    <footer>\
+        MediaFlow Cloud &bull; Hosted on Vercel\
+    </footer>\
+\
+    <script>\
+        function startDownload() \{\
+            const url = document.getElementById('urlInput').value.trim();\
+            const statusBox = document.getElementById('statusBox');\
+            const statusText = document.getElementById('statusText');\
+\
+            if (!url) \{\
+                alert('Please enter a valid YouTube or Spotify URL.');\
+                return;\
+            \}\
+\
+            statusBox.classList.add('active');\
+            statusText.textContent = 'Connecting to extraction engine...';\
+\
+            setTimeout(() => \{\
+                statusText.textContent = 'Preparing media package... Ready soon.';\
+            \}, 2000);\
+        \}\
+    </script>\
+</body>\
+</html>}

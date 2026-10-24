@@ -1,4 +1,4 @@
-YouTube & Spotify Downloader 1.2.0 for Mac
+YouTube & Spotify Downloader 1.3.0 for Mac
 
 1. Open the disk image and drag the app onto Applications.
 2. Open the app from Applications. Paste a YouTube or Spotify link.

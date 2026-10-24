@@ -1,4 +1,3 @@
 spotdl==4.5.2
 yt-dlp==2026.10.21
 pyinstaller==6.22.3
-imageio-ffmpeg==0.6.0

@@ -6,7 +6,7 @@ import re
 import signal
 import subprocess
 import sys
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qs, urlencode, urlunsplit
 
 PROC = None
 CANCELLED = False
@@ -22,13 +22,34 @@ def validate(config):
     host = (parsed.hostname or '').lower()
     if parsed.scheme != 'https' or parsed.username or parsed.password or parsed.port not in (None, 443):
         raise ValueError('Paste a valid HTTPS YouTube or Spotify link.')
+    if len(url) > 2048 or parsed.fragment or any(ord(c)<32 for c in url):
+        raise ValueError('Paste a supported media link without a fragment.')
     if host == 'open.spotify.com':
         if not re.fullmatch(r'/(?:intl-[a-z]{2}/)?(?:playlist|album|track)/[A-Za-z0-9]{22}/?', parsed.path):
             raise ValueError('Use a Spotify playlist, album, or track link.')
         provider = 'spotify'
+        url = urlunsplit(('https', host, parsed.path, '', ''))
     elif host in ('youtube.com', 'www.youtube.com', 'music.youtube.com', 'youtu.be'):
-        if parsed.path in ('', '/'):
-            raise ValueError('Paste a YouTube video or playlist link.')
+        query = parse_qs(parsed.query, keep_blank_values=True)
+        valid_id = lambda value: bool(re.fullmatch(r'[A-Za-z0-9_-]{11}', value))
+        if host == 'youtu.be' and valid_id(parsed.path.lstrip('/')):
+            video = parsed.path[1:]
+        elif parsed.path == '/watch' and len(query.get('v', [])) == 1 and valid_id(query['v'][0]):
+            video = query['v'][0]
+        elif re.fullmatch(r'/(?:shorts|live)/[A-Za-z0-9_-]{11}/?', parsed.path):
+            video = parsed.path.strip('/').split('/')[1]
+        elif host != 'youtu.be' and parsed.path == '/playlist':
+            video = None
+        else:
+            raise ValueError('Use a YouTube video or playlist link, not a redirect or channel page.')
+        clean = {'v': video} if video else {}
+        if 'list' in query:
+            if len(query['list']) != 1 or not re.fullmatch(r'[A-Za-z0-9_-]{10,120}', query['list'][0]):
+                raise ValueError('Use a valid YouTube playlist link.')
+            clean['list'] = query['list'][0]
+        if not video and 'list' not in clean:
+            raise ValueError('Use a YouTube video or playlist link.')
+        url = urlunsplit(('https', 'www.youtube.com', '/watch' if video else '/playlist', urlencode(clean), ''))
         provider = 'youtube'
     else:
         raise ValueError('Only YouTube and Spotify links are supported.')
@@ -48,7 +69,7 @@ def spotify_command(url, fmt, destination, data):
     launcher = [sys.executable, '--spotdl', str(data / 'tool-home')] if getattr(sys,'frozen',False) else [sys.executable, '-u', '-c', wrapper, str(data / 'tool-home')]
     return launcher + [
             'download', url, '--format', fmt, '--threads', '1', '--no-cache',
-            '--max-retries', '2', '--print-errors', '--simple-tui',
+            '--max-retries', '2', '--print-errors', '--simple-tui', '--playlist-numbering',
             '--audio','bandcamp','youtube-music',
             '--yt-dlp-args=--js-runtimes node', '--output',
             str(destination / (prefix + '{artists} - {title} [{track-id}].{output-ext}'))]

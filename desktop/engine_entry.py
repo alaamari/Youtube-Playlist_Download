@@ -18,6 +18,8 @@ def main():
         home=Path(sys.argv.pop(1))
         home.mkdir(parents=True,exist_ok=True)
         Path.home=classmethod(lambda cls:home)
+        if sys.argv[1:2] not in (['download'],['--version']):
+            raise ValueError('This packaged engine supports downloads only.')
         runpy.run_module('spotdl',run_name='__main__')
         return 0
     if sys.argv[1:2]==['--yt-dlp']:
@@ -29,7 +31,7 @@ def main():
         import platform
         import shutil
         import subprocess
-        result={'version':'1.2.0','architecture':platform.machine(),'frozen':getattr(sys,'frozen',False),'spotdl':importlib.metadata.version('spotdl'),'yt-dlp':importlib.metadata.version('yt-dlp')}
+        result={'version':'1.3.0','python':platform.python_version(),'architecture':platform.machine(),'frozen':getattr(sys,'frozen',False),'spotdl':importlib.metadata.version('spotdl'),'yt-dlp':importlib.metadata.version('yt-dlp')}
         for name in ('ffmpeg','node'):
             path=shutil.which(name)
             if not path or not Path(path).is_relative_to(resources):

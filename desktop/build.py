@@ -16,7 +16,7 @@ import tarfile
 import urllib.request
 import certifi
 
-VERSION='1.2.0'
+VERSION='1.3.0'
 NODE_VERSION='22.23.4'
 ROOT=Path(__file__).resolve().parent
 TLS=ssl.create_default_context(cafile=certifi.where())
@@ -35,6 +35,8 @@ def download(url,path):
 
 def main():
     parser=argparse.ArgumentParser()
+    parser.add_argument('--ffmpeg',required=True,type=Path,help='Patched FFmpeg built with desktop/build_ffmpeg.sh')
+    parser.add_argument('--signing-identity',help='Installed Developer ID Application identity; omit for a test build')
     parser.add_argument('--output',required=True,type=Path)
     parser.add_argument('--skip-freeze',action='store_true',help='Reuse the engine during packaging-only repairs')
     parser.add_argument('--skip-dmg',action='store_true',help='Create ZIP only when disk images are unavailable')
@@ -50,7 +52,7 @@ def main():
     app=stage/'YouTube & Spotify Downloader.app'
     contents=app/'Contents';resources=contents/'Resources';binaries=resources/'bin'
     binaries.mkdir(parents=True);(contents/'MacOS').mkdir()
-    build_env=dict(os.environ,PYINSTALLER_CONFIG_DIR=str(work/'pyinstaller-cache'))
+    build_env=dict(os.environ,PYINSTALLER_CONFIG_DIR=str(work/'pyinstaller-cache'),MEDIAFLOW_VENDOR_DIR=str(work/'vendor'))
     if not args.skip_freeze:
         run(sys.executable,'-m','PyInstaller','--noconfirm','--clean','--distpath',work/'dist','--workpath',work/'pyinstaller',ROOT/'engine.spec',env=build_env)
     shutil.copytree(work/'dist/mediaflow-engine',resources/'engine',symlinks=True)
@@ -60,8 +62,8 @@ def main():
         shutil.copytree(package_root/directory,resources/'engine/_internal'/package/directory,dirs_exist_ok=True)
     run('swiftc','-swift-version','5','-O','-module-cache-path',work/'swift-cache','-target',arch+'-apple-macosx12.0','-framework','AppKit',ROOT/'Main.swift','-o',contents/'MacOS/Downloader')
     shutil.copy2(ROOT/'icon.icns',resources/'icon.icns')
-    import imageio_ffmpeg
-    ffmpeg=Path(imageio_ffmpeg.get_ffmpeg_exe())
+    ffmpeg=args.ffmpeg.resolve()
+    if not ffmpeg.is_file():raise RuntimeError('Provide the verified patched FFmpeg executable.')
     shutil.copy2(ffmpeg,binaries/'ffmpeg');(binaries/'ffmpeg').chmod(0o755)
     node_arch='arm64' if arch=='arm64' else 'x64'
     node_name=f'node-v{NODE_VERSION}-darwin-{node_arch}'
@@ -87,16 +89,21 @@ def main():
                     target=licenses/distribution.metadata['Name']/Path(name).name
                     target.parent.mkdir(exist_ok=True)
                     shutil.copy2(source,target)
-    (licenses/'Third-party-notices.txt').write_text('This app includes Python (PSF license), spotDL (MIT), yt-dlp (Unlicense), FFmpeg and Node.js, and their dependencies. Individual licenses are included here. FFmpeg is distributed under its included GPL terms. FFmpeg binary and corresponding build/source information: https://github.com/imageio/imageio-binaries and https://github.com/imageio/imageio-ffmpeg . Upstream FFmpeg source: https://ffmpeg.org/download.html . Application source and build scripts: https://github.com/alaamari/Youtube-Playlist_Download/tree/main/desktop .\n')
+    for filename in ('FFmpeg-LGPL-2.1.txt','LAME-COPYING.txt','ffmpeg-source-manifest.json','build_ffmpeg.sh'):
+        source=ROOT/filename
+        if not source.exists():raise RuntimeError('Missing source/license record: '+filename)
+        shutil.copy2(source,licenses/filename)
+    (licenses/'Third-party-notices.txt').write_text('Includes Python (PSF), spotDL (MIT, patched to omit its web server), yt-dlp (Unlicense), Node.js and dependencies. FFmpeg 9.0.2 and LAME 3.100 are built from the corresponding source archives and build script supplied with this release, under their included LGPL terms. No GPL-only FFmpeg components are enabled. Source archives and this application source: https://github.com/alaamari/Youtube-Playlist_Download/releases . Modified FFmpeg binaries may replace Contents/Resources/bin/ffmpeg; re-sign the local bundle after replacing a component.\n')
     python_license=Path(sys.base_prefix)/'LICENSE.txt'
     if python_license.exists():shutil.copy2(python_license,licenses/'Python-LICENSE.txt')
-    info={'CFBundleExecutable':'Downloader','CFBundleIdentifier':'com.alaamari.mediaflow','CFBundleName':'YouTube & Spotify Downloader','CFBundleDisplayName':'YouTube & Spotify Downloader','CFBundlePackageType':'APPL','CFBundleShortVersionString':VERSION,'CFBundleVersion':'120','CFBundleIconFile':'icon.icns','LSMinimumSystemVersion':'12.0','NSHighResolutionCapable':True}
+    info={'CFBundleExecutable':'Downloader','CFBundleIdentifier':'com.alaamari.mediaflow','CFBundleName':'YouTube & Spotify Downloader','CFBundleDisplayName':'YouTube & Spotify Downloader','CFBundlePackageType':'APPL','CFBundleShortVersionString':VERSION,'CFBundleVersion':'130','CFBundleIconFile':'icon.icns','LSMinimumSystemVersion':'12.0','NSHighResolutionCapable':True}
     (contents/'Info.plist').write_bytes(plistlib.dumps(info))
-    versions={name:importlib.metadata.version(name) for name in ('spotdl','yt-dlp','pyinstaller','imageio-ffmpeg')}
-    (resources/'build-info.json').write_text(json.dumps({'version':VERSION,'architecture':arch,'node':NODE_VERSION,'packages':versions},indent=2))
+    versions={name:importlib.metadata.version(name) for name in ('spotdl','yt-dlp','pyinstaller')}
+    (resources/'build-info.json').write_text(json.dumps({'version':VERSION,'architecture':arch,'node':NODE_VERSION,'python':platform.python_version(),'ffmpeg':subprocess.check_output([str(ffmpeg),'-version'],text=True).splitlines()[0],'packages':versions},indent=2))
     shutil.copy2(ROOT/'Install.txt',stage/'Install.txt')
     os.symlink('/Applications',stage/'Applications')
-    run('codesign','--force','--deep','--sign','-',app)
+    from sign_release import sign_app
+    sign_app(app,args.signing_identity)
     run('codesign','--verify','--deep','--strict',app)
     run(resources/'engine/mediaflow-engine','--self-check',env={'PATH':'/usr/bin:/bin','HOME':str(Path.home()),'LANG':'en_US.UTF-8'})
     run(resources/'engine/mediaflow-engine','--spotdl',work/'self-test','--version')

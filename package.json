@@ -1,1 +1,12 @@
-{"name":"mediaflow-cloud","version":"1.0.0","private":true,"type":"module","dependencies":{"@vercel/sandbox":"3.9.0"},"scripts":{"test":"node --test tests/cloud.test.mjs"}}
+{
+  "name": "mediaflow-cloud",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@vercel/sandbox": "3.9.0"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}

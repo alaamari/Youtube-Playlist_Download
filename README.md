@@ -14,7 +14,7 @@ The site and authenticated cloud worker start correctly. A real Spotify track lo
 
 ## Use the cloud website
 
-Open the Vercel site. No access key is required. Paste a Spotify playlist/album/track or a YouTube link. Choose your audio/video format, choose a folder if supported by your browser, and click **Convert & download**. If you chose a folder first, files save there automatically after conversion. Otherwise click **Save files to folder** or **Save ZIP**. The website writes only to folders you explicitly authorize.
+Open the Vercel site. No access key is required. Paste a Spotify playlist/album/track or a YouTube link. Choose your audio/video format, choose a folder if supported by your browser, and click **Convert & download**. If you chose a folder first in Chrome or Edge, each finished song saves immediately while remaining songs continue downloading. Spotify tracks run one at a time. Completed files are exposed only after conversion and metadata writing finish. Each song is saved once per browser session. Otherwise use the individual **Save song** links as they appear, or choose **Save ready songs to folder**. A ZIP remains an optional copy after all tracks finish. The website writes only to folders you explicitly authorize.
 
 Spotify downloads use matching audio sources, not Spotify stream extraction. For best results use public, accessible playlists. All processing occurs in the cloud. No Spotify login or cookies are collected by this app.
 

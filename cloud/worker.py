@@ -13,40 +13,68 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 import zipfile
 
-BASE=Path('/vercel/job')
+BASE=Path(os.environ.get('MEDIAFLOW_JOB_DIR','/vercel/job'))
 BASE.mkdir(parents=True,exist_ok=True)
 STATE={'state':'running','message':'Reading your playlist…','files':[],'log':[],'archiveReady':False}
 KEY=os.environ['JOB_KEY']
 ORIGIN=os.environ['APP_ORIGIN']
 PROC=None
 
-def download(config):
+def publish(file):
+    file=Path(file).resolve()
+    folder=(BASE/'files').resolve()
+    if file.parent!=folder or not file.is_file() or file.suffix not in ('.mp3','.mp4','.flac','.m4a'):
+        return
+    if file.name not in [item['name'] for item in STATE['files']]:
+        STATE['files']=STATE['files']+[{'name':file.name,'size':file.stat().st_size}]
+
+def run(cmd,on_line=None):
     global PROC
+    failed=False
+    PROC=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,start_new_session=True,bufsize=1)
+    for line in PROC.stdout:
+        text=re.sub(r'\x1b\[[0-9;]*[mGKHF]','',line).strip()
+        if text.startswith('MEDIAFLOW_READY:'):
+            publish(text.removeprefix('MEDIAFLOW_READY:'))
+            continue
+        if text:
+            if any(marker in text for marker in ('AudioProviderError','ERROR:','Failed to download')):failed=True
+            STATE['message']=text[-500:];STATE['log']=(STATE['log']+[text[-500:]])[-30:]
+        if on_line:on_line(text)
+    code=PROC.wait();PROC.stdout.close()
+    return code==0 and not failed
+
+def download(config):
     folder=BASE/'files';folder.mkdir(exist_ok=True)
-    if config['provider']=='spotify':
-        cmd=[sys.executable,'-m','spotdl','download',config['url'],'--format',config['format'],'--threads','2','--no-cache','--max-retries','2','--print-errors','--simple-tui','--yt-dlp-args=--js-runtimes node','--output',str(folder/'{list-position} - {artists} - {title}.{output-ext}')]
-    else:
-        cmd=[sys.executable,'-m','yt_dlp','--ignore-config','--js-runtimes','node','--newline','--no-colors','--restrict-filenames','--socket-timeout','20','--retries','2','--yes-playlist' if config['playlist'] else '--no-playlist','--max-downloads','100','--max-filesize','300M','-o',str(folder/'%(playlist_index&{} - |)s%(title).150B [%(id)s].%(ext)s')]
-        if config['format']=='mp4':cmd+=['-f','bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best','--merge-output-format','mp4']
-        else:cmd+=['-x','--audio-format',config['format'],'--audio-quality','0','--embed-metadata']
-        cmd+=['--',config['url']]
-    had_errors=False
+    success=True
     try:
-        PROC=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,start_new_session=True,bufsize=1)
-        for line in PROC.stdout:
-            text=re.sub(r'\x1b\[[0-9;]*[mGKHF]','',line).strip()
-            if text:
-                if any(marker in text for marker in ('AudioProviderError', 'ERROR:', 'Failed to download')):had_errors=True
-                STATE['message']=text[-500:];STATE['log']=(STATE['log']+[text[-500:]])[-30:]
-        code=PROC.wait();PROC.stdout.close()
-        files=sorted(p for p in folder.iterdir() if p.is_file() and p.suffix in ('.mp3','.mp4','.flac','.m4a'))
-        if not files:raise RuntimeError('No files were downloaded. '+ ' '.join(STATE['log'][-4:]))
-        STATE.update(message='Packaging your files…')
+        if config['provider']=='spotify':
+            listing=BASE/'tracks.spotdl'
+            if not run([sys.executable,'-m','spotdl','save',config['url'],'--save-file',str(listing),'--no-cache','--max-retries','2','--simple-tui']):
+                raise RuntimeError('Could not read the Spotify playlist. See download details.')
+            tracks=json.loads(listing.read_text())
+            STATE['total']=len(tracks)
+            for index,track in enumerate(tracks,1):
+                STATE['message']=f'Downloading song {index} of {len(tracks)}…'
+                before={p.name for p in folder.iterdir()}
+                ok=run([sys.executable,'-m','spotdl','download',track['url'],'--format',config['format'],'--threads','1','--no-cache','--max-retries','2','--print-errors','--simple-tui','--yt-dlp-args=--js-runtimes node','--output',str(folder/(f'{index:03} - '+'{artists} - {title}.{output-ext}'))])
+                success=success and ok
+                if ok:
+                    for file in sorted(folder.iterdir()):
+                        if file.name not in before:publish(file)
+        else:
+            cmd=[sys.executable,'-m','yt_dlp','--ignore-config','--js-runtimes','node','--newline','--no-colors','--restrict-filenames','--socket-timeout','20','--retries','2','--yes-playlist' if config['playlist'] else '--no-playlist','--max-downloads','100','--max-filesize','300M','--no-simulate','--print','after_move:MEDIAFLOW_READY:%(filepath)s','-o',str(folder/'%(playlist_index&{} - |)s%(title).150B [%(id)s].%(ext)s')]
+            if config['format']=='mp4':cmd+=['-f','bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best','--merge-output-format','mp4']
+            else:cmd+=['-x','--audio-format',config['format'],'--audio-quality','0','--embed-metadata']
+            success=run(cmd+['--',config['url']])
+        files=[folder/item['name'] for item in STATE['files']]
+        if not files:raise RuntimeError('No files were downloaded. The audio provider may require sign-in from this cloud server. See download details.')
+        STATE.update(message='Preparing optional ZIP copy…')
         with zipfile.ZipFile(BASE/'playlist.zip','w',compression=zipfile.ZIP_STORED) as archive:
             for file in files:archive.write(file,file.name)
-        STATE.update(state='complete' if code==0 and not had_errors else 'partial',message=f'{len(files)} files ready to save.' if code==0 and not had_errors else f'{len(files)} files ready; some items failed. See details.',files=[{'name':p.name,'size':p.stat().st_size} for p in files],archiveReady=True)
+        STATE.update(state='complete' if success else 'partial',message=f'{len(files)} songs finished.' if success else f'{len(files)} songs finished; some items failed. See details.',archiveReady=True)
     except Exception as exc:
-        STATE.update(state='error',message=('The audio provider could not supply this media. YouTube may require sign-in from this cloud server. No files were saved. See download details.' if 'YT-DLP download error' in str(exc) else str(exc)[-1600:]))
+        STATE.update(state='partial' if STATE['files'] else 'error',message=str(exc)[-1600:])
     STATE['finished']=time.time()
 
 class Handler(BaseHTTPRequestHandler):
@@ -66,9 +94,10 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(401);self.end_headers();return
         if url.path=='/status':
             self.send_response(200);self.cors();self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(json.dumps(STATE).encode());return
-        if not STATE.get('archiveReady'):
-            self.send_response(409);self.end_headers();return
-        if url.path=='/archive':file=BASE/'playlist.zip'
+        if url.path=='/archive':
+            if not STATE.get('archiveReady'):
+                self.send_response(409);self.end_headers();return
+            file=BASE/'playlist.zip'
         elif url.path=='/file':
             name=query.get('name',[''])[0]
             if name not in [f['name'] for f in STATE['files']]:

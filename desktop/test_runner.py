@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 import tempfile
+import io
 import unittest
 from unittest.mock import patch
 
@@ -26,6 +27,18 @@ class PortableCommands(unittest.TestCase):
         with tempfile.TemporaryDirectory() as destination:
             for url,fmt in [('https://evil.example/x','mp3'),('https://open.spotify.com/album/3eZWAHSjyU30lfC89F2jnQ','mp4')]:
                 with self.assertRaises(ValueError):runner.validate({'url':url,'format':fmt,'destination':destination})
+    def test_a_conversion_error_marks_a_download_with_saved_songs_partial(self):
+        with tempfile.TemporaryDirectory() as destination:
+            class Output:
+                def __iter__(self):
+                    (Path(destination)/'finished.mp3').write_bytes(b'finished')
+                    yield 'Done\n'
+                    yield 'FFmpegError: Failed to convert another song\n'
+                def close(self):pass
+            process=type('Process',(),{'stdout':Output(),'wait':lambda self:0})()
+            with patch.object(runner.subprocess,'Popen',return_value=process),patch.object(runner,'emit') as emit:
+                runner.main({'url':'https://open.spotify.com/album/3eZWAHSjyU30lfC89F2jnQ','format':'mp3','destination':destination,'data':destination})
+            self.assertEqual(emit.call_args.kwargs['state'],'partial')
 
 
 if __name__=='__main__':unittest.main()

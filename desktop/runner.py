@@ -99,7 +99,7 @@ def main(config):
                 emit('saved', name=path.name, count=len(saved))
             continue
         log = (log + [text])[-20:]
-        failed = failed or any(value in text for value in ('AudioProviderError', 'ERROR:', 'Failed to download'))
+        failed = failed or any(value in text for value in ('AudioProviderError', 'FFmpegError', 'MetadataError', 'ERROR:', 'Failed to download'))
         percent = re.search(r'\[download\]\s+(\d+(?:\.\d+)?)%', text)
         emit('progress', message=text, percent=float(percent[1]) if percent else None)
         if provider == 'spotify' and ('Done' in text or re.search(r'\d+/\d+ complete', text)):

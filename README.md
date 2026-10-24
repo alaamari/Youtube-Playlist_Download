@@ -12,7 +12,7 @@ The old experimental cloud engine remains in repository history for reference. I
 
 ## Mac app
 
-The current public installer is version 1.2.0, an ad-hoc signed build. A security rebuild is in progress; do not describe it as Apple-notarized. Build sources are in `desktop/`. The developer’s original installed app is separate and is not replaced by website deployment.
+The current public installer is version 1.3.0, an ad-hoc signed security rebuild with Python 3.13.17, FFmpeg 9.0.2 and the unused spotDL web server removed. It is not Apple-notarized. Build sources are in `desktop/`. The developer’s original installed app is separate and is not replaced by website deployment.
 
 Spotify supplies track metadata; matching audio comes from public source providers. Spotify streams are not decrypted. Provider availability and match accuracy vary. Download only media you own or have explicit permission to download, and follow platform terms. Public availability is not permission.
 
@@ -28,3 +28,9 @@ npm audit --omit=dev
 `vercel.json` selects `public/` as static output and the standalone `api/jobs.mjs` endpoint. The active website requires no environment variables. Old cloud secrets are not read by this release.
 
 Privacy, permitted use and support links are on `/privacy.html`. Do not post passwords, cookies or private signing keys in public issues.
+
+## Release verification
+
+The exact requested six-track Spotify album downloaded as six MP3 files, a track saved as FLAC through the native app, YouTube MP4 completed, and an Intel Spotify-to-M4A download succeeded under Rosetta. Output files passed full decoding. Both disk images passed read-only package and signature checks. All 55 packaged Python distributions passed the known-advisory audit. No developer signing or notarization credentials are embedded.
+
+Download the [1.3.0 release](https://github.com/alaamari/Youtube-Playlist_Download/releases/tag/v1.3.0). Corresponding FFmpeg/LAME sources, a package inventory and checksums accompany the installers. An active paid Apple Developer Program membership is required before Developer ID signing and notarization can be completed. The original installed Mac app is unchanged.

@@ -38,7 +38,7 @@ export function createHandler({Worker=Sandbox,botCheck=checkBotId,admit=reserve,
    const jobKey=randomBytes(32).toString('base64url'),fileKey=randomBytes(32).toString('base64url');
    const exp=Date.now()+SESSION_MS;
    stage='sandbox creation';
-   worker=await Worker.create({name,source:{type:'snapshot',snapshotId},ports:[8000],resources:{vcpus:1},timeout:SESSION_MS,persistent:false,networkPolicy:NETWORK,env:{JOB_KEY:jobKey,FILE_KEY:fileKey,APP_ORIGIN:req.headers.origin,JOB_EXPIRES_AT:String(exp)}});
+   worker=await Worker.create({name,runtime:'node22',source:{type:'snapshot',snapshotId},ports:[8000],resources:{vcpus:1},timeout:SESSION_MS,persistent:false,networkPolicy:NETWORK,env:{JOB_KEY:jobKey,FILE_KEY:fileKey,APP_ORIGIN:req.headers.origin,JOB_EXPIRES_AT:String(exp)}});
    stage='worker file setup';
    const names=['worker.py','runner_entry.py','desktop_runner.py','spotdl_cli.py'];
    const sources=await Promise.all(names.map(n=>readFile(new URL('../cloud/'+n,import.meta.url))));

@@ -2,13 +2,13 @@
 
 Native Mac app for saving permitted YouTube media and matching audio from Spotify metadata to your selected folder. Songs save one by one. No visitor access key, browser cookies or account password is required.
 
-## Public website security update
+## Website downloads
 
-Cloud job creation is disabled. The public API returns a paused status for GET and rejects every POST without loading credentials or provisioning a worker. This prevents anonymous visitors from creating paid download workers while a zero-overage service has not been configured. Hosting and bandwidth still follow the account provider’s plan; this is not a billing guarantee.
+Cloud downloads run on the Vercel Hobby plan and the free Upstash plan. They are limited to 20 songs, 64 MB per song, 256 MB total, and 20 minutes per session. Only one session can run at a time; the shared allowance is 10 sessions per 30 days and 3 sessions per connection per day. If a free quota is exhausted, new sessions are rejected until it resets. No paid plan, paid add-on, or automatic upgrade is configured.
 
-The website publishes only an explicit allowlist of static files into `public/`. Python source, packages, desktop build files and environment files are excluded from the static output. Security headers include a restrictive Content Security Policy, frame protection, no-referrer and content-type protection. No cookie upload is accepted. Production JavaScript dependencies have been removed.
+Each finished song is offered separately or saved immediately to the folder you choose. Workers are temporary, private to one job, and stop after completion or expiry. The website has no visitor access-key field and never asks for account passwords or browser cookies. Vercel BotID Basic, exact website-origin checks and atomic Upstash limits protect job creation. Random short-lived worker and file tokens are generated internally for each session.
 
-The old experimental cloud engine remains in repository history for reference. It is not deployed as a worker, and must not be re-enabled without durable atomic admission, bot checks, per-user and global quotas, scoped short-lived download credentials, resource caps and verified billing safeguards. An in-memory counter or a list-then-create check is insufficient.
+The website publishes only an explicit allowlist of static files into `public/`. Python source, packages, desktop build files and environment files are excluded from the static output. Security headers include a restrictive Content Security Policy, frame protection, no-referrer and content-type protection. Production JavaScript dependencies have been removed from the static page.
 
 ## Mac app
 
@@ -25,7 +25,7 @@ npm run build
 npm audit --omit=dev
 ```
 
-`vercel.json` selects `public/` as static output and the standalone `api/jobs.mjs` endpoint. The active website requires no environment variables. Old cloud secrets are not read by this release.
+`vercel.json` selects `public/` as static output and the standalone `api/jobs.mjs` endpoint. Production requires server-only Vercel Sandbox, BotID, signing-secret and Upstash environment settings. No credentials are exposed to visitors or included in the website build.
 
 Privacy, permitted use and support links are on `/privacy.html`. Do not post passwords, cookies or private signing keys in public issues.
 

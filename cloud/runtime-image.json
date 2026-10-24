@@ -1,0 +1,10 @@
+{
+  "snapshotId": "snap_AyqSO9VA0OnqlavMgDli4epSukTB",
+  "python": "3.12.15",
+  "node": "Vercel Sandbox node22 runtime",
+  "ffmpeg": "Present at /usr/bin/ffmpeg in the retained runtime",
+  "spotdl": "4.5.2 (CLI download mode only)",
+  "yt-dlp": "2026.10.21",
+  "built": "2026-10-24",
+  "retention": "Existing retained snapshot; no additional snapshot storage is created by deployment"
+}

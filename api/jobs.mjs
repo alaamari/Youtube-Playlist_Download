@@ -28,21 +28,27 @@ export function createHandler({Worker=Sandbox,botCheck=checkBotId,admit=reserve,
   }
   if(input.action!=null&&input.action!=='start')return res.status(400).json({error:'Invalid action.'});
   let params;try{params=validate(input);}catch(error){return res.status(400).json({error:error.message});}
-  let worker,owner,name,admitted=false;
+  let worker,owner,name,admitted=false,stage='browser verification';
   try{
    const verification=await botCheck({developmentOptions:{isDevelopment:false},advancedOptions:{checkLevel:'basic',headers:req.headers}});
    if(verification.isBot||!verification.isHuman)return res.status(403).json({error:'Browser verification failed. Reload the page in a regular browser and try again.'});
    owner=randomBytes(24).toString('base64url');name='mediaflow-download-v2-'+randomBytes(12).toString('hex');
+   stage='free-limit reservation';
    const allowance=await admit(req,owner);admitted=true;
    const jobKey=randomBytes(32).toString('base64url'),fileKey=randomBytes(32).toString('base64url');
    const exp=Date.now()+SESSION_MS;
+   stage='sandbox creation';
    worker=await Worker.create({name,source:{type:'snapshot',snapshotId},ports:[8000],resources:{vcpus:1},timeout:SESSION_MS,persistent:false,networkPolicy:NETWORK,env:{JOB_KEY:jobKey,FILE_KEY:fileKey,APP_ORIGIN:req.headers.origin,JOB_EXPIRES_AT:String(exp)}});
+   stage='worker file setup';
    const names=['worker.py','runner_entry.py','desktop_runner.py','spotdl_cli.py'];
    const sources=await Promise.all(names.map(n=>readFile(new URL('../cloud/'+n,import.meta.url))));
    await worker.writeFiles([{path:'/vercel/job/config.json',content:Buffer.from(JSON.stringify(params))},...names.map((n,i)=>({path:'/vercel/'+n,content:sources[i]}))]);
+   stage='worker launch';
    await worker.runCommand({cmd:'/vercel/mediaflow-venv/bin/python',args:['-u','/vercel/worker.py'],detached:true,cwd:'/vercel'});
+   stage='worker readiness';
    const ready=await worker.runCommand({cmd:'/vercel/mediaflow-venv/bin/python',args:['-c',"from pathlib import Path; import time,sys; p=Path('/vercel/job/server.ready'); [(time.sleep(0.1) if not p.exists() else None) for _ in range(100)]; sys.exit(0 if p.exists() else 1)"],cwd:'/vercel'});
    if(ready.exitCode!==0)throw new Error('Worker not ready');
+   stage='worker route validation';
    const domain=worker.domain(8000),url=new URL(domain);
    if(url.protocol!=='https:'||!url.hostname.endsWith('.vercel.run')||url.username||url.password||url.port)throw new Error('Invalid worker domain');
    return res.status(202).json({domain,jobKey,expiresAt:exp,remainingSessions:allowance.remaining,ticket:sign({p:'cancel',name,owner,exp:Date.now()+LEASE_MS},secret)});
@@ -51,7 +57,7 @@ export function createHandler({Worker=Sandbox,botCheck=checkBotId,admit=reserve,
     try{const current=worker||await Worker.get({name,resume:false});await current.stop();await free(owner);}catch{}
    }
    if(error instanceof AdmissionError){res.setHeader('Retry-After',String(error.retry));return res.status(error.status).json({error:error.message,retryAfter:error.retry});}
-   console.error('Cloud download start:',error.name);
+   console.error('Cloud download start:',stage,error.name,error.statusCode||error.status||'',error.code||'');
    return res.status(502).json({error:'The cloud download could not start. Please reload and try again. Your Mac app remains available.'});
   }
  };

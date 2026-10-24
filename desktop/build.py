@@ -12,6 +12,7 @@ import shutil
 import ssl
 import subprocess
 import sys
+import sysconfig
 import tarfile
 import urllib.request
 import certifi
@@ -94,8 +95,9 @@ def main():
         if not source.exists():raise RuntimeError('Missing source/license record: '+filename)
         shutil.copy2(source,licenses/filename)
     (licenses/'Third-party-notices.txt').write_text('Includes Python (PSF), spotDL (MIT, patched to omit its web server), yt-dlp (Unlicense), Node.js and dependencies. FFmpeg 9.0.2 and LAME 3.100 are built from the corresponding source archives and build script supplied with this release, under their included LGPL terms. No GPL-only FFmpeg components are enabled. Source archives and this application source: https://github.com/alaamari/Youtube-Playlist_Download/releases . Modified FFmpeg binaries may replace Contents/Resources/bin/ffmpeg; re-sign the local bundle after replacing a component.\n')
-    python_license=Path(sys.base_prefix)/'LICENSE.txt'
-    if python_license.exists():shutil.copy2(python_license,licenses/'Python-LICENSE.txt')
+    python_license=Path(sysconfig.get_path('stdlib'))/'LICENSE.txt'
+    if not python_license.exists():raise RuntimeError('The Python license notice is missing from the build runtime.')
+    shutil.copy2(python_license,licenses/'Python-LICENSE.txt')
     info={'CFBundleExecutable':'Downloader','CFBundleIdentifier':'com.alaamari.mediaflow','CFBundleName':'YouTube & Spotify Downloader','CFBundleDisplayName':'YouTube & Spotify Downloader','CFBundlePackageType':'APPL','CFBundleShortVersionString':VERSION,'CFBundleVersion':'130','CFBundleIconFile':'icon.icns','LSMinimumSystemVersion':'12.0','NSHighResolutionCapable':True}
     (contents/'Info.plist').write_bytes(plistlib.dumps(info))
     versions={name:importlib.metadata.version(name) for name in ('spotdl','yt-dlp','pyinstaller')}

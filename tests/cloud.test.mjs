@@ -27,10 +27,10 @@ test('bots, invalid origins and denied budgets create no worker',async()=>{
 test('shared rolling quotas survive the stale-lock recovery migration',async()=>{
  env();const calls=[];const req=request();
  await reserve(req,'fixture-owner',async(...args)=>{calls.push(args);return [1,9,0];});
- assert.equal(calls[0][3],'mediaflow:{v2}:active-v3');assert.equal(calls[0][4],'mediaflow:{v2}:sessions');
+ assert.equal(calls[0][3],'mediaflow:{v2}:active-v4');assert.equal(calls[0][4],'mediaflow:{v2}:sessions');
  assert.match(calls[0][5],/^mediaflow:\{v2\}:client:[a-f0-9]{64}$/);
  await release('fixture-owner',async(...args)=>{calls.push(args);return 1;});
- assert.equal(calls[1][3],'mediaflow:{v2}:active-v3');
+ assert.equal(calls[1][3],'mediaflow:{v2}:active-v4');
 });
 test('atomic admission owns concurrency; workers are ephemeral, bounded and scoped',async()=>{
  env();let active=false,creates=0,options,files,commands=[],stopped=0;
@@ -55,6 +55,11 @@ test('failed worker setup stops the worker before releasing admission',async()=>
  env();const order=[];const worker={async writeFiles(){throw new Error('upload failed');},async stop(){order.push('stop');}};
  const h=createHandler({Worker:{create:async()=>worker},botCheck:async()=>({isBot:false,isHuman:true}),admit:async()=>({remaining:9}),free:async()=>order.push('release')});
  const r=response();await h(request(),r);assert.equal(r.code,502);assert.deepEqual(order,['stop','release']);
+});
+test('failed sandbox creation releases the lease when SDK reports 404 in response.status',async()=>{
+ env();const order=[];
+ const h=createHandler({Worker:{create:async()=>{throw new Error('create failed');},get:async()=>{throw Object.assign(new Error('not found'),{response:{status:404}});}},botCheck:async()=>({isBot:false,isHuman:true}),admit:async()=>({remaining:9}),free:async()=>order.push('release')});
+ const r=response();await h(request(),r);assert.equal(r.code,502);assert.deepEqual(order,['release']);
 });
 test('static build publishes an allowlist and keeps cookies and credentials out of forms',async()=>{
  assert.deepEqual((await readdir('public')).sort(),['cloud.js','index.html','privacy.html','style.css']);

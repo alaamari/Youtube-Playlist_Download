@@ -54,7 +54,11 @@ export function createHandler({Worker=Sandbox,botCheck=checkBotId,admit=reserve,
    return res.status(202).json({domain,jobKey,expiresAt:exp,remainingSessions:allowance.remaining,ticket:sign({p:'cancel',name,owner,exp:Date.now()+LEASE_MS},secret)});
   }catch(error){
    if(admitted){
-    try{const current=worker||await Worker.get({name,resume:false});await current.stop();await free(owner);}catch{}
+    try{const current=worker||await Worker.get({name,resume:false});await current.stop();await free(owner);}
+    catch(cleanupError){
+     const status=cleanupError.statusCode||cleanupError.status,code=String(cleanupError.code||cleanupError.name||'');
+     if(!worker&&(status===404||code==='NOT_FOUND'||code==='NotFoundError'))try{await free(owner);}catch{}
+    }
    }
    if(error instanceof AdmissionError){res.setHeader('Retry-After',String(error.retry));return res.status(error.status).json({error:error.message,retryAfter:error.retry});}
    console.error('Cloud download start:',stage,error.name,error.statusCode||error.status||'',error.code||'');

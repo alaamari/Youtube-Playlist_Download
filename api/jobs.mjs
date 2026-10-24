@@ -6,7 +6,7 @@ import {validate,sign,verify} from '../lib/security.mjs';
 import {reserve,release,redisCommand,AdmissionError,SESSION_MS,LEASE_MS} from '../lib/admission.mjs';
 export const config={maxDuration:120};
 const ORIGINS=new Set(['https://youtube-playlist-download.vercel.app','https://youtube-playlist-download-alaa12.vercel.app']);
-const NETWORK={allow:['spotify.com','*.spotify.com','*.scdn.co','*.spotifycdn.com','*.spotifycdn.net','bandcamp.com','*.bandcamp.com','*.bcbits.com','youtube.com','*.youtube.com','youtu.be','*.googlevideo.com','*.ytimg.com','*.ggpht.com','*.google.com','*.googleapis.com'],subnets:{deny:['0.0.0.0/8','10.0.0.0/8','100.64.0.0/10','127.0.0.0/8','169.254.0.0/16','172.16.0.0/12','192.168.0.0/16','224.0.0.0/4','::/128','::1/128','fc00::/7','fe80::/10']}};
+const NETWORK={allow:['spotify.com','*.spotify.com','*.scdn.co','*.spotifycdn.com','*.spotifycdn.net','bandcamp.com','*.bandcamp.com','*.bcbits.com','youtube.com','*.youtube.com','youtu.be','*.googlevideo.com','*.ytimg.com','*.ggpht.com','*.google.com','*.googleapis.com'],subnets:{deny:['0.0.0.0/8','10.0.0.0/8','100.64.0.0/10','127.0.0.0/8','169.254.0.0/16','172.16.0.0/12','192.168.0.0/16','224.0.0.0/4']}};
 export function createHandler({Worker=Sandbox,botCheck=checkBotId,admit=reserve,free=release,command=redisCommand}={}){
  return async function handler(req,res){
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Allow','GET, POST');

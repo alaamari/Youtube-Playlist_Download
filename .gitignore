@@ -1,0 +1,7 @@
+.mediaflow/
+.venv/
+__pycache__/
+*.pyc
+.env*
+.vercel/
+node_modules/

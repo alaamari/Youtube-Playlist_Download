@@ -1,0 +1,11 @@
+.git
+.mediaflow
+engine
+node_modules
+desktop.html
+app.js
+tests
+*.command
+*.md
+requirements.txt
+__pycache__

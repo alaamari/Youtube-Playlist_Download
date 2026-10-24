@@ -8,6 +8,12 @@ Cloud sessions last **45 minutes**, including conversion and saving. Save before
 
 Spotify metadata is used to find matching audio on Bandcamp first, then YouTube through spotDL. Files are not extracted from Spotify streams. Matches and availability can vary. Private/restricted playlists may need authentication or may be unavailable under Spotify's API restrictions. Download only material you have permission to save.
 
+## Download the Mac app
+
+Version 1.2.0 includes its own download engine, FFmpeg and Node. No separate Python, Homebrew, Terminal setup or access key is needed. Downloads run locally and save songs one at a time to your selected folder.
+
+Get the Apple Silicon or Intel installer from the website’s **Get the Mac app** section, or the [GitHub release](https://github.com/alaamari/Youtube-Playlist_Download/releases/tag/v1.2.0). Open the disk image and drag the app into Applications. macOS 12 or later is required. This independent build is ad-hoc signed, not Apple-notarized; first-open instructions are included. Packaging sources and build instructions are in [desktop/](desktop/README.md).
+
 ## Current verification status
 
 The Spotify album `https://open.spotify.com/album/3eZWAHSjyU30lfC89F2jnQ` (Noussaïr — 7ess-75) downloaded all six full-length MP3 tracks from public Bandcamp artist uploads in a Vercel cloud worker without cookies or a visitor access key. All six files passed full FFmpeg decoding; their titles, artist, album tags, and durations matched Spotify metadata. YouTube still rejects this cloud connection with “Sign in to confirm you’re not a bot,” so selections available only on YouTube may still fail. This test establishes this album and the alternate source path, not availability of every Spotify release.

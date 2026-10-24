@@ -5,6 +5,7 @@ node_modules
 desktop.html
 app.js
 tests
+desktop
 *.command
 *.md
 requirements.txt

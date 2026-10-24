@@ -1,0 +1,18 @@
+YouTube & Spotify Downloader 1.2.0 for Mac
+
+1. Open the disk image and drag the app onto Applications.
+2. Open the app from Applications. Paste a YouTube or Spotify link.
+3. Choose your folder and click Download. Songs save one at a time.
+
+Everything needed for downloads is included. No Python, Homebrew, Terminal setup, cookies.txt, or access key is required. Internet access is needed when downloading.
+
+This independent build is not Apple-notarized. If macOS blocks the first launch, review the app's source and release page, then use System Settings > Privacy & Security > Open Anyway if you trust it. Do not disable macOS security settings. Official guidance: https://support.apple.com/en-us/102445
+
+Choose Apple Silicon for Macs with M1, M2, M3, M4, M5 or later Apple chips. Choose Intel for Intel Macs. macOS 12 or later is required.
+
+Spotify links supply metadata. Audio is matched on Bandcamp, then YouTube, and may differ from Spotify's recording. Source availability and restrictions can vary. Conversion does not improve the source quality.
+
+Only download media you have permission to save.
+
+Source, licenses and support:
+https://github.com/alaamari/Youtube-Playlist_Download

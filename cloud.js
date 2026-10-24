@@ -8,6 +8,8 @@ async function api(body) {
   const response=await fetch('/api/jobs',{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(125000)});
   const data=await response.json();if(!response.ok)throw new Error(data.error||'Cloud connection failed.');return data;
 }
+async function selectedSession(){const file=$('youtubeCookies').files?.[0];if(!file)return undefined;if(file.size>262144)throw new Error('Choose a cookies.txt file smaller than 256 KB.');const text=await file.text();if(!text.trim())throw new Error('The session file is empty. Choose a YouTube cookies.txt export.');return text;}
+$('youtubeCookies').onchange=()=>{$('sessionStatus').textContent=$('youtubeCookies').files?.[0]?'Session selected for this download only.':'No session selected.';};
 function error(message){$('error').textContent=message;$('error').hidden=false;}
 async function connect(){try{await api();$('connection').textContent='Cloud connected';$('connection').classList.add('connected');return true;}catch(e){$('connection').textContent='Cloud unavailable';error(e.message);return false;}}
 $('browse').onclick=async()=>{
@@ -17,7 +19,7 @@ $('browse').onclick=async()=>{
 $('url').oninput=()=>{let spotify=false;try{spotify=new URL($('url').value).hostname==='open.spotify.com';}catch{}$('format').querySelector('[value="mp4"]').disabled=spotify;if(spotify&&$('format').value==='mp4')$('format').value='mp3';$('playlist').disabled=spotify;if(spotify)$('playlist').value='yes';$('providerHint').textContent=spotify?'Spotify tracks are matched with audio on YouTube; matches can differ from the original recording.':'Download one video or a full playlist. Conversion does not improve source quality.';};
 $('form').onsubmit=async event=>{
   event.preventDefault();$('error').hidden=true;$('start').disabled=true;
-  try{if(!await connect())throw new Error('The cloud downloader is unavailable. Please try again shortly.');job=await api({url:$('url').value.trim(),format:$('format').value,playlist:$('playlist').value==='yes'});targetFolder=null;savedFiles.clear();$('readyFiles').replaceChildren();sessionStorage.setItem('mediaflow-cloud-job',JSON.stringify(job));$('form').hidden=true;$('job').hidden=false;$('jobState').textContent='Starting cloud worker';$('message').textContent='Reading your playlist…';$('another').hidden=true;$('cancel').hidden=false;$('archive').hidden=true;$('saveFolder').hidden=true;$('progress').removeAttribute('value');failures=0;poll();}catch(e){error(e.message);}finally{$('start').disabled=false;}
+  try{if(!await connect())throw new Error('The cloud downloader is unavailable. Please try again shortly.');const youtubeCookies=await selectedSession();job=await api({youtubeCookies,url:$('url').value.trim(),format:$('format').value,playlist:$('playlist').value==='yes'});targetFolder=null;savedFiles.clear();$('readyFiles').replaceChildren();sessionStorage.setItem('mediaflow-cloud-job',JSON.stringify(job));$('form').hidden=true;$('job').hidden=false;$('jobState').textContent='Starting cloud worker';$('message').textContent='Reading your playlist…';$('another').hidden=true;$('cancel').hidden=false;$('archive').hidden=true;$('saveFolder').hidden=true;$('retrySession').hidden=true;$('progress').removeAttribute('value');failures=0;poll();}catch(e){error(e.message);}finally{$('start').disabled=false;}
 };
 function workerURL(path){return `${job.domain}/${path}${path.includes('?')?'&':'?'}key=${encodeURIComponent(job.jobKey)}`;}
 async function poll(){
@@ -27,7 +29,7 @@ async function poll(){
     $('jobState').textContent=({running:'Downloading & converting',complete:'Ready to save',partial:'Some files ready',error:'Download failed'})[state.state]||state.state;
     $('count').textContent=state.files.length?`${savedFiles.size} saved · ${state.files.length} ready`:'';
     renderFiles(state.files);$('message').textContent=state.message;$('logs').textContent=state.log.join('\n');$('savedFolder').textContent=`Save before ${new Date(job.expiresAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}. Files are removed when this cloud session ends.`;
-    const active=state.state==='running';$('another').hidden=active;$('cancel').hidden=!active;$('archive').hidden=!state.archiveReady;$('saveFolder').hidden=!state.files.length||!window.showDirectoryPicker;
+    const active=state.state==='running';const needsSession=['YOUTUBE_AUTH_REQUIRED','SOURCE_UNAVAILABLE'].includes(state.errorCode)||/sign in to confirm|YT-DLP download error|provider may require sign-in/i.test([state.message,...state.log].join('\n'));$('retrySession').hidden=active||!needsSession;$('another').hidden=active;$('cancel').hidden=!active;$('archive').hidden=!state.archiveReady;$('saveFolder').hidden=!state.files.length||!window.showDirectoryPicker;
     if(folder&&state.files.some(file=>!savedFiles.has(file.name)))await saveToFolder();
     if(!active){$('progress').max=1;$('progress').value=state.state==='complete'?1:0;return;}
   }catch(e){failures++;$('message').textContent=failures<5?'Waiting for the cloud worker…':'The cloud worker is not responding. You can cancel and start again.';if(failures>=5){$('another').hidden=false;return;}}
@@ -35,6 +37,7 @@ async function poll(){
 }
 async function stop(){if(job){await api({action:'cancel',ticket:job.ticket});sessionStorage.removeItem('mediaflow-cloud-job');job=null;}}
 $('cancel').onclick=async()=>{try{await stop();clearTimeout(timer);$('jobState').textContent='Cancelled';$('message').textContent='Cloud worker stopped.';$('cancel').hidden=true;$('another').hidden=false;}catch(e){$('message').textContent=e.message;}};
+$('retrySession').onclick=async()=>{try{await stop();clearTimeout(timer);$('job').hidden=true;$('form').hidden=false;$('youtubeSession').open=true;$('sessionStatus').textContent='Choose your signed-in YouTube cookies.txt file, then start again.';$('youtubeCookies').focus();}catch(e){$('message').textContent=e.message;}};
 $('another').onclick=async()=>{try{await stop();clearTimeout(timer);$('job').hidden=true;$('form').hidden=false;}catch(e){$('message').textContent=e.message;}};
 function renderFiles(files){
   const list=$('readyFiles');list.replaceChildren();

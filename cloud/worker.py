@@ -19,6 +19,7 @@ STATE={'state':'running','message':'Reading your playlist…','files':[],'log':[
 KEY=os.environ['JOB_KEY']
 ORIGIN=os.environ['APP_ORIGIN']
 PROC=None
+COOKIE_FILE=BASE/'youtube-cookies.txt'
 
 def publish(file):
     file=Path(file).resolve()
@@ -38,6 +39,9 @@ def run(cmd,on_line=None):
             publish(text.removeprefix('MEDIAFLOW_READY:'))
             continue
         if text:
+            if any(marker in text.lower() for marker in ('sign in to confirm', 'cookies are no longer valid', 'login required')):
+                STATE['errorCode']='YOUTUBE_AUTH_REQUIRED'
+            if 'AudioProviderError' in text:STATE.setdefault('errorCode','SOURCE_UNAVAILABLE')
             if any(marker in text for marker in ('AudioProviderError','ERROR:','Failed to download')):failed=True
             STATE['message']=text[-500:];STATE['log']=(STATE['log']+[text[-500:]])[-30:]
         if on_line:on_line(text)
@@ -47,6 +51,7 @@ def run(cmd,on_line=None):
 def download(config):
     folder=BASE/'files';folder.mkdir(exist_ok=True)
     success=True
+    session=['--cookie-file',str(COOKIE_FILE)] if COOKIE_FILE.exists() else []
     try:
         if config['provider']=='spotify':
             listing=BASE/'tracks.spotdl'
@@ -57,8 +62,10 @@ def download(config):
             for index,track in enumerate(tracks,1):
                 STATE['message']=f'Downloading song {index} of {len(tracks)}…'
                 before={p.name for p in folder.iterdir()}
-                ok=run([sys.executable,'-m','spotdl','download',track['url'],'--format',config['format'],'--threads','1','--no-cache','--max-retries','2','--print-errors','--simple-tui','--yt-dlp-args=--js-runtimes node','--output',str(folder/(f'{index:03} - '+'{artists} - {title}.{output-ext}'))])
+                ok=run([sys.executable,'-m','spotdl','download',track['url'],'--format',config['format'],'--threads','1','--no-cache','--max-retries','2','--print-errors','--simple-tui','--yt-dlp-args=--js-runtimes node',*session,'--output',str(folder/(f'{index:03} - '+'{artists} - {title}.{output-ext}'))])
                 success=success and ok
+                if not ok and STATE.get('errorCode')=='YOUTUBE_AUTH_REQUIRED':break
+                if not ok and STATE.get('errorCode')=='SOURCE_UNAVAILABLE' and not STATE['files']:break
                 if ok:
                     for file in sorted(folder.iterdir()):
                         if file.name not in before:publish(file)
@@ -66,6 +73,7 @@ def download(config):
             cmd=[sys.executable,'-m','yt_dlp','--ignore-config','--js-runtimes','node','--newline','--no-colors','--restrict-filenames','--socket-timeout','20','--retries','2','--yes-playlist' if config['playlist'] else '--no-playlist','--max-downloads','100','--max-filesize','300M','--no-simulate','--print','after_move:MEDIAFLOW_READY:%(filepath)s','-o',str(folder/'%(playlist_index&{} - |)s%(title).150B [%(id)s].%(ext)s')]
             if config['format']=='mp4':cmd+=['-f','bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best','--merge-output-format','mp4']
             else:cmd+=['-x','--audio-format',config['format'],'--audio-quality','0','--embed-metadata']
+            if COOKIE_FILE.exists():cmd+=['--cookies',str(COOKIE_FILE)]
             success=run(cmd+['--',config['url']])
         files=[folder/item['name'] for item in STATE['files']]
         if not files:raise RuntimeError('No files were downloaded. The audio provider may require sign-in from this cloud server. See download details.')
@@ -74,7 +82,12 @@ def download(config):
             for file in files:archive.write(file,file.name)
         STATE.update(state='complete' if success else 'partial',message=f'{len(files)} songs finished.' if success else f'{len(files)} songs finished; some items failed. See details.',archiveReady=True)
     except Exception as exc:
-        STATE.update(state='partial' if STATE['files'] else 'error',message=str(exc)[-1600:])
+        if STATE.get('errorCode')=='YOUTUBE_AUTH_REQUIRED':
+            message='YouTube requires a valid signed-in session. Choose your YouTube cookies.txt file below and retry. If a session was already supplied, it may have expired or YouTube may still be refusing this cloud connection.'
+        else:message=str(exc)[-1600:]
+        STATE.update(state='partial' if STATE['files'] else 'error',message=message)
+    finally:
+        COOKIE_FILE.unlink(missing_ok=True)
     STATE['finished']=time.time()
 
 class Handler(BaseHTTPRequestHandler):

@@ -19,24 +19,29 @@ $('browse').onclick=async()=>{
 $('url').oninput=()=>{let spotify=false;try{spotify=new URL($('url').value).hostname==='open.spotify.com';}catch{}$('format').querySelector('[value="mp4"]').disabled=spotify;if(spotify&&$('format').value==='mp4')$('format').value='mp3';$('playlist').disabled=spotify;if(spotify)$('playlist').value='yes';$('providerHint').textContent=spotify?'Spotify tracks are matched with audio on YouTube; matches can differ from the original recording.':'Download one video or a full playlist. Conversion does not improve source quality.';};
 $('form').onsubmit=async event=>{
   event.preventDefault();$('error').hidden=true;$('start').disabled=true;
-  try{if(!await connect())throw new Error('The cloud downloader is unavailable. Please try again shortly.');const youtubeCookies=await selectedSession();job=await api({youtubeCookies,url:$('url').value.trim(),format:$('format').value,playlist:$('playlist').value==='yes'});targetFolder=null;savedFiles.clear();$('readyFiles').replaceChildren();sessionStorage.setItem('mediaflow-cloud-job',JSON.stringify(job));$('form').hidden=true;$('job').hidden=false;$('jobState').textContent='Starting cloud worker';$('message').textContent='Reading your playlist…';$('another').hidden=true;$('cancel').hidden=false;$('archive').hidden=true;$('saveFolder').hidden=true;$('retrySession').hidden=true;$('progress').removeAttribute('value');failures=0;poll();}catch(e){error(e.message);}finally{$('start').disabled=false;}
+  try{if(!await connect())throw new Error('The cloud downloader is unavailable. Please try again shortly.');const youtubeCookies=await selectedSession();job=await api({youtubeCookies,url:$('url').value.trim(),format:$('format').value,playlist:$('playlist').value==='yes'});targetFolder=null;savedFiles.clear();$('readyFiles').replaceChildren();sessionStorage.setItem('mediaflow-cloud-job',JSON.stringify(job));$('form').hidden=true;$('job').hidden=false;$('jobState').textContent='Starting cloud worker';$('message').textContent='Reading your playlist…';$('another').hidden=true;$('cancel').hidden=false;$('pause').hidden=false;$('pause').textContent='Pause';$('archive').hidden=true;$('saveFolder').hidden=true;$('retrySession').hidden=true;$('progress').removeAttribute('value');failures=0;poll();}catch(e){error(e.message);}finally{$('start').disabled=false;}
 };
 function workerURL(path){return `${job.domain}/${path}${path.includes('?')?'&':'?'}key=${encodeURIComponent(job.jobKey)}`;}
 async function poll(){
   if(Date.now()>job.expiresAt){$('message').textContent='This cloud session has expired. Start a new download.';$('another').hidden=false;$('cancel').hidden=true;return;}
   try{
     const response=await fetch(workerURL('status'),{signal:AbortSignal.timeout(15000)});if(!response.ok)throw new Error('Worker unavailable');const state=await response.json();failures=0;job.state=state;
-    $('jobState').textContent=({running:'Downloading & converting',complete:'Ready to save',partial:'Some files ready',error:'Download failed'})[state.state]||state.state;
+    $('jobState').textContent=({running:'Downloading',paused:'Paused',finishing:'Finishing',complete:'Ready to save',partial:'Some files ready',cancelled:'Cancelled',error:'Download failed'})[state.state]||state.state;
     $('count').textContent=state.files.length?`${savedFiles.size} saved · ${state.files.length} ready`:'';
     renderFiles(state.files);$('message').textContent=state.message;$('logs').textContent=state.log.join('\n');$('savedFolder').textContent=`Save before ${new Date(job.expiresAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}. Files are removed when this cloud session ends.`;
-    const active=state.state==='running';const needsSession=['YOUTUBE_AUTH_REQUIRED','SOURCE_UNAVAILABLE'].includes(state.errorCode)||/sign in to confirm|YT-DLP download error|provider may require sign-in/i.test([state.message,...state.log].join('\n'));$('retrySession').hidden=active||!needsSession;$('another').hidden=active;$('cancel').hidden=!active;$('archive').hidden=!state.archiveReady;$('saveFolder').hidden=!state.files.length||!window.showDirectoryPicker;
+    const active=['running','paused','finishing'].includes(state.state);$('pause').hidden=!['running','paused'].includes(state.state);$('pause').textContent=state.state==='paused'?'Resume':'Pause';const needsSession=['YOUTUBE_AUTH_REQUIRED','SOURCE_UNAVAILABLE'].includes(state.errorCode)||/sign in to confirm|YT-DLP download error|provider may require sign-in/i.test([state.message,...state.log].join('\n'));$('retrySession').hidden=active||!needsSession;$('another').hidden=active;$('cancel').hidden=!['running','paused'].includes(state.state);$('archive').hidden=!state.archiveReady;$('saveFolder').hidden=!state.files.length||!window.showDirectoryPicker;
     if(folder&&state.files.some(file=>!savedFiles.has(file.name)))await saveToFolder();
     if(!active){$('progress').max=1;$('progress').value=state.state==='complete'?1:0;return;}
   }catch(e){failures++;$('message').textContent=failures<5?'Waiting for the cloud worker…':'The cloud worker is not responding. You can cancel and start again.';if(failures>=5){$('another').hidden=false;return;}}
   timer=setTimeout(poll,2000);
 }
 async function stop(){if(job){await api({action:'cancel',ticket:job.ticket});sessionStorage.removeItem('mediaflow-cloud-job');job=null;}}
-$('cancel').onclick=async()=>{try{await stop();clearTimeout(timer);$('jobState').textContent='Cancelled';$('message').textContent='Cloud worker stopped.';$('cancel').hidden=true;$('another').hidden=false;}catch(e){$('message').textContent=e.message;}};
+async function workerControl(action){
+  const response=await fetch(workerURL('control'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action}),signal:AbortSignal.timeout(15000)});
+  const state=await response.json();if(!response.ok)throw new Error(state.error||'Could not update the download.');job.state=state;return state;
+}
+$('pause').onclick=async()=>{try{const state=await workerControl(job.state?.state==='paused'?'resume':'pause');$('pause').textContent=state.state==='paused'?'Resume':'Pause';$('message').textContent=state.message;$('jobState').textContent=state.state==='paused'?'Paused':'Downloading';}catch(e){$('message').textContent=e.message;}};
+$('cancel').onclick=async()=>{try{await workerControl('cancel');clearTimeout(timer);$('jobState').textContent='Cancelled';$('message').textContent='Download cancelled. Songs already saved remain in your folder.';$('cancel').hidden=true;$('pause').hidden=true;$('another').hidden=false;await poll();}catch(e){$('message').textContent=e.message;}};
 $('retrySession').onclick=async()=>{try{await stop();clearTimeout(timer);$('job').hidden=true;$('form').hidden=false;$('youtubeSession').open=true;$('sessionStatus').textContent='Choose your signed-in YouTube cookies.txt file, then start again.';$('youtubeCookies').focus();}catch(e){$('message').textContent=e.message;}};
 $('another').onclick=async()=>{try{await stop();clearTimeout(timer);$('job').hidden=true;$('form').hidden=false;}catch(e){$('message').textContent=e.message;}};
 function renderFiles(files){
@@ -58,7 +63,7 @@ async function saveToFolder(){
       const handle=await targetFolder.getFileHandle(file.name.replace(/[\x00-\x1f/\\]/g,'_'),{create:true});const output=await handle.createWritable();await response.body.pipeTo(output);savedFiles.add(file.name);renderFiles(currentJob.state.files);
     }
     $('count').textContent=`${savedFiles.size} saved · ${currentJob.state.files.length} ready`;
-    $('message').textContent=currentJob.state.state==='running'?`Saved ${savedFiles.size} songs to ${folder.name}. Downloading the next song…`:`Saved ${savedFiles.size} songs to ${folder.name}.`;
+    $('message').textContent=`Saved ${savedFiles.size} songs to ${folder.name}.`+(currentJob.state.state==='paused'?' Download paused.':['running','finishing'].includes(currentJob.state.state)?' The remaining songs are still processing.':'');
   }catch(e){if(e.name!=='AbortError')$('message').textContent=e.message;}finally{saving=false;$('saveFolder').disabled=false;}
 }
 $('saveFolder').onclick=saveToFolder;

@@ -12,6 +12,12 @@ Spotify metadata is used to find matching audio on YouTube through spotDL. Files
 
 The site and authenticated cloud worker start correctly. A real Spotify track lookup succeeded; a public playlist lookup found 50 tracks. The first real cloud audio-download test was rejected by YouTube with **“Sign in to confirm you’re not a bot.”** The same result remained after enabling Node.js for extraction. Consequently, cloud audio downloads are **not verified working** from this Vercel region. Optional per-download YouTube session support is available; authenticated downloads require a valid session supplied by the user and are not guaranteed to succeed. The app reports failure when no files are produced. Source availability is an external requirement; hosting alone does not resolve it.
 
+## Website engine update
+
+The cloud adapter now launches `cloud/mac_runner.py`, an unchanged copy of the tested Mac app 1.1.1 engine. `cloud/engine-version.json` records its SHA-256. `runner_entry.py` provides optional session injection without altering that engine. The cloud HTTP wrapper translates its JSON progress/saved/done events, exposes finished songs immediately, and pauses/resumes/cancels the isolated child process group. Cancel retains finished files until the browser starts another job or the cloud session expires.
+
+The website starts with local HTML/CSS/JavaScript and a compact interface matching the Mac workflow. No visitor access key or local engine is needed. Browser folder permissions still apply. The same engine can be rejected by YouTube when it runs on a cloud connection; desktop success does not establish cloud success. Live verification is recorded in the task output report.
+
 ## Use the cloud website
 
 Open the Vercel site. No access key is required. Paste a Spotify playlist/album/track or a YouTube link. Choose your audio/video format, choose a folder if supported by your browser, and click **Convert & download**. If you chose a folder first in Chrome or Edge, each finished song saves immediately while remaining songs continue downloading. Spotify tracks run one at a time. Completed files are exposed only after conversion and metadata writing finish. Each song is saved once per browser session. Otherwise use the individual **Save song** links as they appear, or choose **Save ready songs to folder**. A ZIP remains an optional copy after all tracks finish. The website writes only to folders you explicitly authorize.

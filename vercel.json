@@ -23,7 +23,7 @@
   "functions": {
     "api/jobs.mjs": {
       "maxDuration": 120,
-      "includeFiles": "cloud/worker.py"
+      "includeFiles": "cloud/**"
     }
   }
 }

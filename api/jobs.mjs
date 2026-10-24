@@ -7,7 +7,7 @@ export default async function handler(req,res) {
   res.setHeader('Cache-Control','no-store');
   const key=process.env.MEDIAFLOW_SIGNING_SECRET;
   if(!key||!process.env.MEDIAFLOW_SNAPSHOT_ID)return res.status(503).json({error:'Cloud worker is not configured yet.'});
-  if(req.method==='GET')return res.status(200).json({status:'ready',mode:'cloud'});
+  if(req.method==='GET')return res.status(200).json({status:'ready',mode:'cloud',engineVersion:'1.1.1'});
   if(req.method!=='POST')return res.status(405).json({error:'Use POST.'});
   let sandbox;
   try {
@@ -28,8 +28,9 @@ export default async function handler(req,res) {
     const jobKey=randomBytes(24).toString('base64url');
     const origin='https://'+req.headers.host;
     sandbox=await Sandbox.create({name,source:{type:'snapshot',snapshotId:process.env.MEDIAFLOW_SNAPSHOT_ID},ports:[8000],resources:{vcpus:1},timeout:2700000,persistent:false,env:{JOB_KEY:jobKey,APP_ORIGIN:origin}});
-    const worker=await readFile(new URL('../cloud/worker.py',import.meta.url));
-    const files=[{path:'/vercel/job/config.json',content:Buffer.from(JSON.stringify(params))},{path:'/vercel/worker.py',content:worker}];
+    const sourceNames=['worker.py','runner_entry.py','mac_runner.py'];
+    const sources=await Promise.all(sourceNames.map(name=>readFile(new URL('../cloud/'+name,import.meta.url))));
+    const files=[{path:'/vercel/job/config.json',content:Buffer.from(JSON.stringify(params))},...sourceNames.map((name,index)=>({path:'/vercel/'+name,content:sources[index]}))];
     if(cookies)files.push({path:'/vercel/job/youtube-cookies.txt',content:Buffer.from(cookies),mode:0o600});
     await sandbox.writeFiles(files);
     await sandbox.runCommand({cmd:'/vercel/mediaflow-venv/bin/python',args:['-u','/vercel/worker.py'],detached:true,cwd:'/vercel'});

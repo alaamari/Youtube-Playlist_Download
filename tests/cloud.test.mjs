@@ -39,7 +39,7 @@ test('atomic admission owns concurrency; workers are ephemeral, bounded and scop
  const replies=await Promise.all(Array.from({length:20},async()=>{const res=response();await handler(request(),res);return res;}));
  assert.equal(creates,1);assert.equal(replies.filter(r=>r.code===202).length,1);assert.equal(replies.filter(r=>r.code===409).length,19);
  const started=replies.find(r=>r.code===202).body;
- assert.equal(options.persistent,false);assert.equal(options.runtime,'node22');assert.equal(options.resources.vcpus,1);assert.equal(options.timeout,1200000);assert.ok(options.networkPolicy.subnets.deny.includes('169.254.0.0/16'));
+ assert.equal(options.persistent,false);assert.equal(options.runtime,'node22');assert.equal(options.resources.vcpus,1);assert.equal(options.timeout,1200000);assert.ok(options.networkPolicy.subnets.deny.includes('169.254.0.0/16'));assert.ok(options.networkPolicy.subnets.deny.every(cidr=>!cidr.includes(':')));
  assert.equal(options.source.snapshotId,'test-snapshot');assert.ok(commands.every(c=>c.cmd==='/vercel/mediaflow-venv/bin/python'));
  assert.ok(files.some(f=>f.path==='/vercel/spotdl_cli.py'));assert.ok(files.every(f=>!f.path.includes('cookie')));
  assert.ok(options.env.FILE_KEY);assert.equal(started.fileKey,undefined);assert.equal(started.domain.includes('key='),false);

@@ -11,6 +11,16 @@ def prepare_engine(cookie_file=None):
     spec=importlib.util.spec_from_file_location('mediaflow_native_engine',Path(__file__).with_name('mac_runner.py'))
     engine=importlib.util.module_from_spec(spec)
     spec.loader.exec_module(engine)
+    native_spotify=engine.spotify_command
+    def spotify_with_sources(url,fmt,destination,data):
+        cmd=native_spotify(url,fmt,destination,data)
+        index=cmd.index('--output')
+        # Prefer public artist uploads before YouTube, which may reject cloud IPs.
+        cmd=cmd[:index]+['--audio','bandcamp','youtube-music']+cmd[index:]
+        if '/album/' in url:
+            cmd[-1]=cmd[-1].replace('{list-position}','{track-number}')
+        return cmd
+    engine.spotify_command=spotify_with_sources
     if cookie_file and Path(cookie_file).is_file():
         spotify=engine.spotify_command
         youtube=engine.youtube_command

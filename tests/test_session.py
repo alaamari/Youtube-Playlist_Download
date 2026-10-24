@@ -24,14 +24,23 @@ class SessionTests(unittest.TestCase):
         manifest=json.loads((CLOUD/'engine-version.json').read_text())
         self.assertEqual(hashlib.sha256((CLOUD/'mac_runner.py').read_bytes()).hexdigest(),manifest['sourceSha256'])
         self.assertEqual(manifest['desktopVersion'],'1.1.1')
-    def test_commands_match_mac_exactly_without_optional_session(self):
+    def test_cloud_spotify_prefers_bandcamp_and_keeps_mac_conversion_settings(self):
         baseline=load('baseline',CLOUD/'mac_runner.py');engine=self.entry.prepare_engine()
         for fmt in ('mp3','m4a','flac'):
             args=('https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M',fmt,Path('/tmp/files'),Path('/tmp/data'))
-            self.assertEqual(engine.spotify_command(*args),baseline.spotify_command(*args))
+            actual=engine.spotify_command(*args);expected=baseline.spotify_command(*args)
+            index=actual.index('--audio')
+            self.assertEqual(actual[index:index+3],['--audio','bandcamp','youtube-music'])
+            self.assertEqual(actual[:index]+actual[index+3:],expected)
         for fmt in ('mp3','m4a','flac','mp4'):
             args=('https://youtu.be/fixture',fmt,Path('/tmp/files'),True)
             self.assertEqual(engine.youtube_command(*args),baseline.youtube_command(*args))
+    def test_album_uses_track_numbers_and_track_links_have_no_prefix(self):
+        engine=self.entry.prepare_engine()
+        album=engine.spotify_command('https://open.spotify.com/album/3eZWAHSjyU30lfC89F2jnQ?si=test','mp3',Path('/tmp/files'),Path('/tmp/data'))
+        self.assertIn('{track-number}',album[-1]);self.assertNotIn('{list-position}',album[-1])
+        track=engine.spotify_command('https://open.spotify.com/track/1zdNgeSqx16HFcENwgplyq','mp3',Path('/tmp/files'),Path('/tmp/data'))
+        self.assertNotIn('{track-number}',track[-1]);self.assertNotIn('{list-position}',track[-1])
     def test_optional_session_is_injected_without_changing_engine_source(self):
         engine=self.entry.prepare_engine(self.worker.COOKIE_FILE)
         youtube=engine.youtube_command('https://youtu.be/fixture','mp3',Path('/tmp/files'),False)

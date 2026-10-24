@@ -56,12 +56,13 @@ export function createHandler({Worker=Sandbox,botCheck=checkBotId,admit=reserve,
    if(admitted){
     try{const current=worker||await Worker.get({name,resume:false});await current.stop();await free(owner);}
     catch(cleanupError){
-     const status=cleanupError.statusCode||cleanupError.status,code=String(cleanupError.code||cleanupError.name||'');
+     const status=cleanupError.response?.status||cleanupError.statusCode||cleanupError.status,code=String(cleanupError.code||cleanupError.name||'');
      if(!worker&&(status===404||code==='NOT_FOUND'||code==='NotFoundError'))try{await free(owner);}catch{}
     }
    }
    if(error instanceof AdmissionError){res.setHeader('Retry-After',String(error.retry));return res.status(error.status).json({error:error.message,retryAfter:error.retry});}
-   console.error('Cloud download start:',stage,error.name,error.statusCode||error.status||'',error.code||'');
+   const detail=String(error.message||'').replace(/snap_[A-Za-z0-9_-]+/g,'[snapshot]').replace(/eyJ[A-Za-z0-9._-]+/g,'[token]').replace(/https?:\/\/\S+/g,'[url]').slice(0,160);
+   console.error('Cloud download start:',stage,error.name,error.response?.status||error.statusCode||error.status||'',error.code||'',detail);
    return res.status(502).json({error:'The cloud download could not start. Please reload and try again. Your Mac app remains available.'});
   }
  };

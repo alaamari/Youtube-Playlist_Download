@@ -55,7 +55,7 @@ async function saveToFolder(){
   if(saving)return;
   saving=true;const currentJob=job;
   try{if(!folder)folder=await window.showDirectoryPicker({mode:'readwrite'});
-    if(!targetFolder)targetFolder=await folder.getDirectoryHandle('MediaFlow-'+new Date().toISOString().replace(/[:.]/g,'-'),{create:true});$('saveFolder').disabled=true;
+    if(!targetFolder)targetFolder=folder;$('saveFolder').disabled=true;
     for(const file of currentJob.state.files){
       if(savedFiles.has(file.name)||job!==currentJob)continue;
       $('message').textContent=`Saving ${file.name}…`;

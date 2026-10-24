@@ -45,7 +45,7 @@ Open **http://127.0.0.1:3000**. The local page connects automatically. Paste a S
 
 To use the Vercel website on the same Mac, copy the connection key printed in the engine's Terminal window into **Connect your Mac download engine**. Allow local-network access if your browser requests it. The key is held only for the browser session and changes whenever the engine restarts. If your browser blocks the hosted page's local connection, use the local page above.
 
-Each download gets a unique subfolder under your selected folder. A ZIP copy becomes available after completion. Partial results are marked separately. Cancel stops the worker but retains files already saved. The native folder chooser appears on the Mac running the engine.
+Cloud browser saves go directly into the folder you select, matching the Mac app. The optional legacy local HTTP engine creates a per-job subfolder. A ZIP copy becomes available after completion. Partial results are marked separately. Cancel stops the worker but retains files already saved. The native folder chooser appears on the Mac running the engine.
 
 ## Troubleshooting
 

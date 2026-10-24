@@ -19,7 +19,7 @@ test('poll saves each ready song during processing without downloading it twice'
   await vm.runInContext('poll()',context);
   await vm.runInContext('poll()',context);
   assert.deepEqual(saved,['first.mp3','second.mp3']);
-  assert.equal(folders.length,1);
+  assert.equal(folders.length,0);
   await vm.runInContext("$('pause').onclick()",context);assert.equal(state,'paused');
   await vm.runInContext("$('pause').onclick()",context);assert.equal(state,'running');
   await vm.runInContext("$('cancel').onclick()",context);assert.equal(state,'cancelled');

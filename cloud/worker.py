@@ -64,6 +64,8 @@ def handle_event(event):
                 STATE['message']=f"{len(STATE['files'])} song(s) ready."+(' Some items failed; see details.' if state=='partial' else '')
             elif state=='cancelled':STATE['message']='Download cancelled. Songs already saved remain in your folder.'
             elif STATE.get('errorCode')=='YOUTUBE_AUTH_REQUIRED':STATE['message']='YouTube requires sign-in from this cloud connection. Open YouTube sign-in help and retry with your session.'
+            elif STATE.get('errorCode')=='SOURCE_UNAVAILABLE':STATE['message']='The audio source refused this cloud download. See details or open YouTube sign-in help.'
+            elif STATE.get('errorCode')=='MATCH_NOT_FOUND':STATE['message']='No matching audio was found for this Spotify selection. See details for the affected songs.'
             else:STATE['message']=message or 'No files were downloaded. See details.'
 
 

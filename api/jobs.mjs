@@ -27,7 +27,7 @@ export default async function handler(req,res) {
     const params=validate(input);
     // One active worker per owner; predictable lookup only inside this protected API.
     const name='mediaflow-download-'+randomBytes(8).toString('hex');
-    const listing=await Sandbox.list({namePrefix:'mediaflow-download-',limit:10});
+    const listing=await Sandbox.list({namePrefix:'mediaflow-download-',sortBy:'name',limit:100});
     if(listing.sandboxes.some(s=>['pending','running'].includes(s.status)))return res.status(409).json({error:'A download session is already open. Finish saving or cancel it before starting another.'});
     const jobKey=randomBytes(24).toString('base64url');
     const origin='https://'+req.headers.host;

@@ -14,7 +14,7 @@ The site and authenticated cloud worker start correctly. A real Spotify track lo
 
 ## Use the cloud website
 
-Open the Vercel site and enter your private access key. Paste a Spotify playlist/album/track or a YouTube link. Choose your audio/video format, choose a folder if supported by your browser, and click **Convert & download**. If you chose a folder first, files save there automatically after conversion. Otherwise click **Save files to folder** or **Save ZIP**. The website writes only to folders you explicitly authorize.
+Open the Vercel site. No access key is required. Paste a Spotify playlist/album/track or a YouTube link. Choose your audio/video format, choose a folder if supported by your browser, and click **Convert & download**. If you chose a folder first, files save there automatically after conversion. Otherwise click **Save files to folder** or **Save ZIP**. The website writes only to folders you explicitly authorize.
 
 Spotify downloads use matching audio sources, not Spotify stream extraction. For best results use public, accessible playlists. All processing occurs in the cloud. No Spotify login or cookies are collected by this app.
 
@@ -55,10 +55,10 @@ GitHub repository: `alaamari/Youtube-Playlist_Download`. Vercel project: `youtub
 
 Required server-only Vercel settings:
 
-- `MEDIAFLOW_ACCESS_KEY`: private owner access key (never put it in source).
+- `MEDIAFLOW_SIGNING_SECRET`: server-only secret used to sign job cancellation tickets; visitors never enter or see it.
 - `MEDIAFLOW_SNAPSHOT_ID`: prepared worker image snapshot with `/vercel/mediaflow-venv/bin/python`, spotDL, yt-dlp, and FFmpeg.
 
-The access key protects compute creation. Signed job tickets protect cancellation; each worker has a random download key. Files are served directly from the worker, avoiding Vercel Function response-size limits. Source URLs and formats are validated before use; no shell interpolation handles user input.
+The website does not require an access key. Signed job tickets protect cancellation; each worker has an automatic random download token. Files are served directly from the worker, avoiding Vercel Function response-size limits. Source URLs and formats are validated before use; no shell interpolation handles user input.
 
 The image snapshot contains dependencies, not user downloads. Rebuild it when updating downloader versions. Keep it available for future jobs. Per-job workers are non-persistent. The `cloud/worker.py` source is uploaded with each job, so application updates do not require rebuilding dependencies.
 

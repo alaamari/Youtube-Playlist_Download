@@ -1,13 +1,12 @@
 import {Sandbox} from '@vercel/sandbox';
 import {readFile} from 'node:fs/promises';
 import {randomBytes} from 'node:crypto';
-import {equal,sign,verify,validate} from '../lib/security.mjs';
+import {sign,verify,validate} from '../lib/security.mjs';
 export const config={maxDuration:120};
 export default async function handler(req,res) {
   res.setHeader('Cache-Control','no-store');
-  const key=process.env.MEDIAFLOW_ACCESS_KEY;
+  const key=process.env.MEDIAFLOW_SIGNING_SECRET;
   if(!key||!process.env.MEDIAFLOW_SNAPSHOT_ID)return res.status(503).json({error:'Cloud worker is not configured yet.'});
-  if(!equal(req.headers.authorization,'Bearer '+key))return res.status(401).json({error:'Enter your access key to use your cloud downloader.'});
   if(req.method==='GET')return res.status(200).json({status:'ready',mode:'cloud'});
   if(req.method!=='POST')return res.status(405).json({error:'Use POST.'});
   let sandbox;
@@ -20,7 +19,7 @@ export default async function handler(req,res) {
       return res.status(200).json({state:'cancelled'});
     }
     const params=validate(input);
-    // One active worker per owner; predictable lookup only inside this protected API.
+    // Keep the existing one-worker limit; each browser receives its own signed job ticket.
     const name='mediaflow-download-'+randomBytes(8).toString('hex');
     const listing=await Sandbox.list({namePrefix:'mediaflow-download-',sortBy:'name',limit:50});
     for await(const current of listing)if(['pending','running'].includes(current.status))return res.status(409).json({error:'A download session is already open. Finish saving or cancel it before starting another.'});

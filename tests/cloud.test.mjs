@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile,readdir} from 'node:fs/promises';
 import {validate,sign,verify} from '../lib/security.mjs';
 import {createHandler} from '../api/jobs.mjs';
-import {AdmissionError,reserve} from '../lib/admission.mjs';
+import {AdmissionError,reserve,release} from '../lib/admission.mjs';
 const origin='https://youtube-playlist-download.vercel.app';
 const fixture={url:'https://open.spotify.com/album/3eZWAHSjyU30lfC89F2jnQ',format:'mp3'};
 function response(){return {headers:{},setHeader(k,v){this.headers[k]=v;},status(n){this.code=n;return this;},json(v){this.body=v;return this;}};}
@@ -27,8 +27,10 @@ test('bots, invalid origins and denied budgets create no worker',async()=>{
 test('shared rolling quotas survive the stale-lock recovery migration',async()=>{
  env();const calls=[];const req=request();
  await reserve(req,'fixture-owner',async(...args)=>{calls.push(args);return [1,9,0];});
- assert.equal(calls[0][3],'mediaflow:{v2}:active-v2');assert.equal(calls[0][4],'mediaflow:{v2}:sessions');
+ assert.equal(calls[0][3],'mediaflow:{v2}:active-v3');assert.equal(calls[0][4],'mediaflow:{v2}:sessions');
  assert.match(calls[0][5],/^mediaflow:\{v2\}:client:[a-f0-9]{64}$/);
+ await release('fixture-owner',async(...args)=>{calls.push(args);return 1;});
+ assert.equal(calls[1][3],'mediaflow:{v2}:active-v3');
 });
 test('atomic admission owns concurrency; workers are ephemeral, bounded and scoped',async()=>{
  env();let active=false,creates=0,options,files,commands=[],stopped=0;

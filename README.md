@@ -8,9 +8,13 @@ Cloud sessions last **45 minutes**, including conversion and saving. Save before
 
 Spotify metadata is used to find matching audio on YouTube through spotDL. Files are not extracted from Spotify streams. Matches and availability can vary. Private/restricted playlists may need authentication or may be unavailable under Spotify's API restrictions. Download only material you have permission to save.
 
+## Current verification status
+
+The site and authenticated cloud worker start correctly. A real Spotify track lookup succeeded; a public playlist lookup found 50 tracks. The first real cloud audio-download test was rejected by YouTube with **“Sign in to confirm you’re not a bot.”** The same result remained after enabling Node.js for extraction. Consequently, cloud audio downloads are **not verified working** from this Vercel region. No cookies, proxies, or access-control workarounds were added. The app reports failure when no files are produced. Source availability is an external requirement; hosting alone does not resolve it.
+
 ## Use the cloud website
 
-Open the Vercel site and enter your private access key. Paste a Spotify playlist/album/track or a YouTube link. Choose your audio/video format, choose a folder if supported by your browser, and click **Convert & download**. After conversion, click **Save files to folder** or **Save ZIP**. Browser security requires this explicit save action; the website cannot silently write to arbitrary folders.
+Open the Vercel site and enter your private access key. Paste a Spotify playlist/album/track or a YouTube link. Choose your audio/video format, choose a folder if supported by your browser, and click **Convert & download**. If you chose a folder first, files save there automatically after conversion. Otherwise click **Save files to folder** or **Save ZIP**. The website writes only to folders you explicitly authorize.
 
 Spotify downloads use matching audio sources, not Spotify stream extraction. For best results use public, accessible playlists. All processing occurs in the cloud. No Spotify login or cookies are collected by this app.
 

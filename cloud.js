@@ -13,7 +13,7 @@ async function connect(){try{await api();sessionStorage.setItem('mediaflow-cloud
 $('connect').onclick=()=>{accessKey=$('key').value.trim();connect();};
 $('browse').onclick=async()=>{
   if(!window.showDirectoryPicker){$('destinationHint').textContent='This browser will save a ZIP after conversion. To choose a folder and save individual tracks, open this page in Chrome or Edge.';return;}
-  try{folder=await window.showDirectoryPicker({mode:'readwrite'});$('destination').value=folder.name;$('destinationHint').textContent='Files will be saved in a new MediaFlow subfolder here after conversion.';}catch(e){if(e.name!=='AbortError')error(e.message);}
+  try{folder=await window.showDirectoryPicker({mode:'readwrite'});$('destination').value=folder.name;$('destinationHint').textContent='Files will save automatically to a new MediaFlow subfolder after conversion.';}catch(e){if(e.name!=='AbortError')error(e.message);}
 };
 $('url').oninput=()=>{let spotify=false;try{spotify=new URL($('url').value).hostname==='open.spotify.com';}catch{}$('format').querySelector('[value="mp4"]').disabled=spotify;if(spotify&&$('format').value==='mp4')$('format').value='mp3';$('playlist').disabled=spotify;if(spotify)$('playlist').value='yes';$('providerHint').textContent=spotify?'Spotify tracks are matched with audio on YouTube; matches can differ from the original recording.':'Download one video or a full playlist. Conversion does not improve source quality.';};
 $('form').onsubmit=async event=>{
@@ -28,22 +28,21 @@ async function poll(){
     $('jobState').textContent=({running:'Downloading & converting',complete:'Ready to save',partial:'Some files ready',error:'Download failed'})[state.state]||state.state;
     $('count').textContent=state.files.length?`${state.files.length} files`:'';$('message').textContent=state.message;$('logs').textContent=state.log.join('\n');$('savedFolder').textContent=`Save before ${new Date(job.expiresAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}. Files are removed when this cloud session ends.`;
     const active=state.state==='running';$('another').hidden=active;$('cancel').hidden=!active;$('archive').hidden=!state.archiveReady;$('saveFolder').hidden=!state.archiveReady||!window.showDirectoryPicker;
-    if(!active){$('progress').max=1;$('progress').value=state.state==='complete'?1:0;return;}
+    if(!active){$('progress').max=1;$('progress').value=state.state==='complete'?1:0;if(state.archiveReady&&folder&&!job.autoSaved){job.autoSaved=true;await saveToFolder();}return;}
   }catch(e){failures++;$('message').textContent=failures<5?'Waiting for the cloud worker…':'The cloud worker is not responding. You can cancel and start again.';if(failures>=5){$('another').hidden=false;return;}}
   timer=setTimeout(poll,2000);
 }
 async function stop(){if(job){await api({action:'cancel',ticket:job.ticket});sessionStorage.removeItem('mediaflow-cloud-job');job=null;}}
 $('cancel').onclick=async()=>{try{await stop();clearTimeout(timer);$('jobState').textContent='Cancelled';$('message').textContent='Cloud worker stopped.';$('cancel').hidden=true;$('another').hidden=false;}catch(e){$('message').textContent=e.message;}};
 $('another').onclick=async()=>{try{await stop();clearTimeout(timer);$('job').hidden=true;$('form').hidden=false;}catch(e){$('message').textContent=e.message;}};
-$('saveFolder').onclick=async()=>{
+async function saveToFolder(){
   try{if(!folder)folder=await window.showDirectoryPicker({mode:'readwrite'});const target=await folder.getDirectoryHandle('MediaFlow-'+new Date().toISOString().replace(/[:.]/g,'-'),{create:true});$('saveFolder').disabled=true;
     for(const file of job.state.files){$('message').textContent=`Saving ${file.name}…`;const response=await fetch(workerURL('file?name='+encodeURIComponent(file.name)));if(!response.ok)throw new Error('File is unavailable. The cloud session may have expired.');const handle=await target.getFileHandle(file.name.replace(/[\x00-\x1f/\\]/g,'_'),{create:true});const output=await handle.createWritable();await response.body.pipeTo(output);}
     $('message').textContent=`Saved ${job.state.files.length} files to ${folder.name}.`;
   }catch(e){if(e.name!=='AbortError')$('message').textContent=e.message;}finally{$('saveFolder').disabled=false;}
-};
+}
+$('saveFolder').onclick=saveToFolder;
 $('archive').onclick=async()=>{
   try{if(window.showSaveFilePicker){const handle=await window.showSaveFilePicker({suggestedName:'MediaFlow-playlist.zip',types:[{description:'ZIP archive',accept:{'application/zip':['.zip']}}]});const response=await fetch(workerURL('archive'));if(!response.ok)throw new Error('Archive unavailable.');await response.body.pipeTo(await handle.createWritable());$('message').textContent='ZIP saved successfully.';}else{const link=document.createElement('a');link.href=workerURL('archive');link.download='MediaFlow-playlist.zip';link.rel='noreferrer';link.click();$('message').textContent='ZIP download started. Choose the save location in your browser.';}}catch(e){if(e.name!=='AbortError')$('message').textContent=e.message;}
 };
 if(accessKey)connect();if(job&&job.expiresAt>Date.now()){$('form').hidden=true;$('job').hidden=false;poll();}
-
-if(new URLSearchParams(location.search).has('setup')){$('retain').hidden=false;$('setup').open=true;$('retain').onclick=async()=>{try{$('retain').disabled=true;const result=await api({action:'retain-image'});$('setupMessage').textContent='Retained image: '+result.snapshotId;}catch(e){$('setupMessage').textContent=e.message;}finally{$('retain').disabled=false;}};}

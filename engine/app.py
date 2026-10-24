@@ -61,8 +61,8 @@ def command(url, provider, fmt, folder, playlist):
     if provider == 'spotify':
         return [sys.executable, '-m', 'spotdl', 'download', url, '--format', fmt,
                 '--output', str(folder / '{list-position} - {artists} - {title}.{output-ext}'),
-                '--threads', '2', '--print-errors', '--no-cache']
-    cmd = [sys.executable, '-m', 'yt_dlp', '--newline', '--no-colors', '--ignore-config',
+                '--threads', '2', '--print-errors', '--no-cache', '--yt-dlp-args=--js-runtimes node']
+    cmd = [sys.executable, '-m', 'yt_dlp', '--newline', '--no-colors', '--ignore-config', '--js-runtimes', 'node',
            '--yes-playlist' if playlist else '--no-playlist', '--max-downloads', '500',
            '--socket-timeout', '30', '--retries', '3', '--restrict-filenames',
            '-o', str(folder / '%(playlist_index&{} - |)s%(title).180B [%(id)s].%(ext)s')]
@@ -94,9 +94,12 @@ def execute(job, cmd):
             job['_process'] = proc
             if job['state'] == 'cancelled':
                 os.killpg(proc.pid, signal.SIGTERM)
+            had_errors = False
             for line in proc.stdout:
                 line = re.sub(r'\x1b\[[0-9;]*[mGKHF]', '', line).strip()
                 if line:
+                    if any(marker in line for marker in ('AudioProviderError', 'ERROR:', 'Failed to download')):
+                        had_errors = True
                     job['message'] = line[-500:]
                     job['log'] = (job['log'] + [line[-500:]])[-40:]
             code = proc.wait()
@@ -107,7 +110,7 @@ def execute(job, cmd):
             job['files'] = [p.name for p in files]
             if not files:
                 raise RuntimeError('No media files were produced. ' + ' '.join(job['log'][-4:]))
-            if code != 0:
+            if code != 0 or had_errors:
                 job.update(state='partial', message=f'{len(files)} files saved; some items failed. Check details below.')
             else:
                 job.update(state='complete', message=f'{len(files)} files saved to {job["destination"]}')

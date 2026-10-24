@@ -13,11 +13,6 @@ export default async function handler(req,res) {
   let sandbox;
   try {
     const input=typeof req.body==='string'?JSON.parse(req.body):req.body;
-    if(input.action==='retain-image') {
-      sandbox=await Sandbox.create({source:{type:'snapshot',snapshotId:process.env.MEDIAFLOW_SNAPSHOT_ID},resources:{vcpus:1},timeout:120000,persistent:false});
-      const image=await sandbox.snapshot({expiration:0});
-      return res.status(200).json({snapshotId:image.snapshotId});
-    }
     if(input.action==='cancel') {
       const job=verify(input.ticket,key);
       sandbox=await Sandbox.get({name:job.name,resume:false});

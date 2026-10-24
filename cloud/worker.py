@@ -24,17 +24,19 @@ def download(config):
     global PROC
     folder=BASE/'files';folder.mkdir(exist_ok=True)
     if config['provider']=='spotify':
-        cmd=[sys.executable,'-m','spotdl','download',config['url'],'--format',config['format'],'--threads','2','--no-cache','--max-retries','2','--print-errors','--simple-tui','--output',str(folder/'{list-position} - {artists} - {title}.{output-ext}')]
+        cmd=[sys.executable,'-m','spotdl','download',config['url'],'--format',config['format'],'--threads','2','--no-cache','--max-retries','2','--print-errors','--simple-tui','--yt-dlp-args=--js-runtimes node','--output',str(folder/'{list-position} - {artists} - {title}.{output-ext}')]
     else:
-        cmd=[sys.executable,'-m','yt_dlp','--ignore-config','--newline','--no-colors','--restrict-filenames','--socket-timeout','20','--retries','2','--yes-playlist' if config['playlist'] else '--no-playlist','--max-downloads','100','--max-filesize','300M','-o',str(folder/'%(playlist_index&{} - |)s%(title).150B [%(id)s].%(ext)s')]
+        cmd=[sys.executable,'-m','yt_dlp','--ignore-config','--js-runtimes','node','--newline','--no-colors','--restrict-filenames','--socket-timeout','20','--retries','2','--yes-playlist' if config['playlist'] else '--no-playlist','--max-downloads','100','--max-filesize','300M','-o',str(folder/'%(playlist_index&{} - |)s%(title).150B [%(id)s].%(ext)s')]
         if config['format']=='mp4':cmd+=['-f','bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best','--merge-output-format','mp4']
         else:cmd+=['-x','--audio-format',config['format'],'--audio-quality','0','--embed-metadata']
         cmd+=['--',config['url']]
+    had_errors=False
     try:
         PROC=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,start_new_session=True,bufsize=1)
         for line in PROC.stdout:
             text=re.sub(r'\x1b\[[0-9;]*[mGKHF]','',line).strip()
             if text:
+                if any(marker in text for marker in ('AudioProviderError', 'ERROR:', 'Failed to download')):had_errors=True
                 STATE['message']=text[-500:];STATE['log']=(STATE['log']+[text[-500:]])[-30:]
         code=PROC.wait();PROC.stdout.close()
         files=sorted(p for p in folder.iterdir() if p.is_file() and p.suffix in ('.mp3','.mp4','.flac','.m4a'))
@@ -42,9 +44,9 @@ def download(config):
         STATE.update(message='Packaging your files…')
         with zipfile.ZipFile(BASE/'playlist.zip','w',compression=zipfile.ZIP_STORED) as archive:
             for file in files:archive.write(file,file.name)
-        STATE.update(state='complete' if code==0 else 'partial',message=f'{len(files)} files ready to save.' if code==0 else f'{len(files)} files ready; some items failed. See details.',files=[{'name':p.name,'size':p.stat().st_size} for p in files],archiveReady=True)
+        STATE.update(state='complete' if code==0 and not had_errors else 'partial',message=f'{len(files)} files ready to save.' if code==0 and not had_errors else f'{len(files)} files ready; some items failed. See details.',files=[{'name':p.name,'size':p.stat().st_size} for p in files],archiveReady=True)
     except Exception as exc:
-        STATE.update(state='error',message=str(exc)[-1600:])
+        STATE.update(state='error',message=('The audio provider could not supply this media. YouTube may require sign-in from this cloud server. No files were saved. See download details.' if 'YT-DLP download error' in str(exc) else str(exc)[-1600:]))
     STATE['finished']=time.time()
 
 class Handler(BaseHTTPRequestHandler):

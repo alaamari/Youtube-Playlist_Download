@@ -112,10 +112,20 @@ def main():
                     target = licenses / distribution.metadata["Name"] / Path(name).name
                     target.parent.mkdir(exist_ok=True)
                     shutil.copy2(source, target)
-    python_license = Path(sysconfig.get_path("stdlib")) / "LICENSE.txt"
-    if not python_license.exists():
-        raise RuntimeError("The Python license notice is missing")
-    shutil.copy2(python_license, licenses / "Python-LICENSE.txt")
+    python_license = next((path for path in (
+        Path(sysconfig.get_path("stdlib")) / "LICENSE.txt",
+        Path(sys.base_prefix) / "LICENSE.txt",
+        Path(sys.base_prefix) / "LICENSE",
+    ) if path.is_file()), None)
+    if python_license:
+        shutil.copy2(python_license, licenses / "Python-LICENSE.txt")
+    else:
+        # The official Windows Python package does not consistently install
+        # its license in the stdlib directory, so fetch the matching CPython tag.
+        license_url = f"https://raw.githubusercontent.com/python/cpython/v{platform.python_version()}/LICENSE"
+        download(license_url, licenses / "Python-LICENSE.txt")
+        if (licenses / "Python-LICENSE.txt").stat().st_size < 1000:
+            raise RuntimeError("Could not retrieve the matching Python license")
     (licenses / "Third-party-notices.txt").write_text(
         "MediaFlow for Windows includes Python (PSF), spotDL (MIT; modified for desktop use to remove its unused web server), yt-dlp (Unlicense), Node.js and their dependencies. "
         "FFmpeg 9.0.2 shared LGPL build is from FFmpeg-Builds/BtbN; it is dynamically linked and includes its required DLLs. No GPL-only or nonfree FFmpeg build is used. "

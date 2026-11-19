@@ -108,7 +108,7 @@ def main(config):
     log = []
     failed = False
     saved = set()
-    PROC = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    PROC = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace', bufsize=1)
     for line in PROC.stdout:
         text = re.sub(r'\x1b\[[0-9;]*[mGKHF]', '', line).strip()
         if not text:
@@ -161,10 +161,11 @@ def cancel(_signum, _frame):
 
 
 if __name__ == '__main__':
-    try:
-        os.setsid()
-    except OSError:
-        pass
+    if hasattr(os, 'setsid'):
+        try:
+            os.setsid()
+        except OSError:
+            pass
     signal.signal(signal.SIGTERM, cancel)
     signal.signal(signal.SIGINT, cancel)
     try:

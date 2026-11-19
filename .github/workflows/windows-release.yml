@@ -1,0 +1,58 @@
+name: Build Windows app
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "desktop/**"
+      - ".github/workflows/windows-release.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: desktop/requirements-build.txt
+
+      - name: Install build tools
+        run: python -m pip install -r desktop/requirements-build.txt
+
+      - name: Build download engine
+        shell: pwsh
+        run: |
+          $env:MEDIAFLOW_VENDOR_DIR = "$PWD\build\vendor"
+          $env:PYINSTALLER_CONFIG_DIR = "$PWD\build\pyinstaller-cache"
+          python -m PyInstaller --noconfirm --clean --distpath build/engine-dist --workpath build/engine-work desktop/engine.spec
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build Windows app window
+        run: python -m PyInstaller --noconfirm --clean --onefile --windowed --name MediaFlow --distpath build/ui-dist --workpath build/ui-work desktop/windows_app.py
+
+      - name: Package app and verify bundled tools
+        run: python desktop/package_windows.py --engine-dist build/engine-dist --ui-dist build/ui-dist --output build/release
+
+      - name: Publish free GitHub download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          @'
+          MediaFlow for Windows 1.4.0 (64-bit)
+
+          Extract the ZIP and run MediaFlow.exe. Keep the included engine and bin folders beside it. Requires Windows 10 or later.
+
+          This unsigned build may show a Windows SmartScreen notice. The SHA-256 file is provided for integrity checking. Source code and third-party notices are available in the repository and in the package.
+
+          Downloads run on your computer and are saved to the folder you choose. The website does not receive or process media.
+          '@ | Set-Content build/release-notes.txt
+          gh release create windows-v1.4.0 build/release/MediaFlow-Windows-1.4.0.zip build/release/MediaFlow-Windows-1.4.0.zip.sha256 --title "MediaFlow Windows 1.4.0" --notes-file build/release-notes.txt --latest=false

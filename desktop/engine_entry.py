@@ -11,7 +11,7 @@ import sys
 def main():
     multiprocessing.freeze_support()
     resources=Path(sys.executable).resolve().parents[1]
-    os.environ['PATH']=str(resources/'bin')+os.pathsep+'/usr/bin:/bin'
+    os.environ['PATH']=str(resources/'bin')+os.pathsep+os.environ.get('PATH','')
     os.environ['PYTHONUNBUFFERED']='1'
     if sys.argv[1:2]==['--spotdl']:
         sys.argv.pop(1)
@@ -40,8 +40,9 @@ def main():
         print(json.dumps(result),flush=True)
         return 0
     import runner
-    try:os.setsid()
-    except OSError:pass
+    if hasattr(os,'setsid'):
+        try:os.setsid()
+        except OSError:pass
     signal.signal(signal.SIGTERM,runner.cancel)
     signal.signal(signal.SIGINT,runner.cancel)
     try:
